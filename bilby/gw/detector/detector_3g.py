@@ -87,57 +87,6 @@ def sn_tianqin(f):
     return (A+B)*C
 
 
-#%%
-'''
-freqs = np.linspace(1,2000,1000)
-plt.figure(figsize=(10,6))
-plt.loglog(freqs,Sn_ET(freqs)**0.5,label='ET')
-plt.xlabel('frequency(Hz)')
-plt.ylabel('$\sqrt{S_n(f)}$')
-plt.legend()
-plt.savefig('ET ASD.png')
-plt.show()
-
-
-freqs = np.linspace(1e-4,1,10000)
-plt.figure(figsize=(10,6))
-plt.loglog(freqs,Sn_LISA(freqs)**0.5,label='LISA')
-plt.loglog(freqs,Sn_LISAoffical(freqs)**0.5,label='LISA offical')
-plt.loglog(freqs,Sn_TianQin(freqs)**0.5,label='TianQin')
-plt.xlabel('frequency(Hz)')
-plt.ylabel('$\sqrt{S_n(f)}$')
-plt.legend()
-plt.savefig('LISA & TianQin ASD.png')
-plt.show()
-'''
-# %% 
-'''
-duration = 4e8
-sampling_frequency = 0.1
-injection_parameters = dict(
-    mass_1=3.6e6, mass_2=2.9e6, a_1=0.4, a_2=0.3, tilt_1=0.5, tilt_2=1.0,
-    phi_12=1.7, phi_jl=0.3, luminosity_distance=2000., theta_jn=0.4, psi=2.659,
-    phase=1.3, geocent_time=1126259642.413, ra=1.375, dec=-1.2108)
-
-waveform_arguments = dict(waveform_approximant='IMRPhenomPv2',
-                          reference_frequency=1e-2, minimum_frequency=1e-4)
-
-waveform_generator = bilby.gw.WaveformGenerator(
-    duration=duration, sampling_frequency=sampling_frequency,
-    frequency_domain_source_model=bilby.gw.source.lal_binary_black_hole,
-    waveform_arguments=waveform_arguments)
-
-plt.figure(figsize=(10,6))
-plt.plot(waveform_generator.frequency_domain_strain(injection_parameters)['cross'])
-plt.title('non-PV')
-plt.show()
-
-hc = waveform_generator.time_domain_strain(injection_parameters)['cross']
-plt.figure(figsize=(10,6))
-plt.plot(hc)
-plt.title('non-PV')
-plt.show()
-'''
 # %% Antenna pattern function in detector frame
 # References:
 # Cutler, https://arxiv.org/abs/gr-qc/9703068v1
@@ -173,23 +122,35 @@ def fcross(gamma, theta, phi, psi):
 # Niu, arXiv:1910.10592
 # Definition of antenna pattern function is $D_{ij}e^{ij}$, where Dij is detector tensor and eij is polarization tensor. In Liang's paper, these two tensor can be expressed in ecliptic frame with theta_e, phi_e, psi_e
 
-def orbit_lisa(t,n):
+def orbit_lisa(n, t):
     '''
-    ! Don't use it !
     Calculate LISA's orbit r = ( x(t),y(t),z(t) ) in ecliptic frame
     t: time(s)
     n: =1,2,3, representing 3 detectors
 
-    Reference: A4-A6 in Liang, 2019
+    Reference: Cutler, 1998
     '''
     R = 1.4959787e11  # 1AU, unit:m
-    L = 2.5e9  # arm length of LISA
-    sigma = L/2/R
-    epi = np.arctan(sigma / (1+sigma/1.732))
-    eL = (1 + 2*sigma/1.732 + 4*sigma**2/3)**0.5 -1
-    theta_Ln = 2*np.pi*(n-1)/3
-    return 0
+    L = 2.5e9         # arm length of LISA
+    T = 31536000.0  # seconds in a year
+    phi = 2 * np.pi * t / T
 
+    # center of mass
+    r0 = np.array([R * np.cos(phi), R * np.sin(phi), np.zeros(len(t))]).transpose()
+    if n == 1:
+        L1 = L * arm_direction_lisa(1, t)
+        L2 = L * arm_direction_lisa(2, t)
+        return r0 - (L1 + L2) / 3
+    elif n == 2:
+        L1 = L * arm_direction_lisa(1, t)
+        L3 = L * arm_direction_lisa(3, t)
+        return r0 - (L3 - L1) / 3
+    elif n == 3:
+        L2 = L * arm_direction_lisa(2, t)
+        L3 = L * arm_direction_lisa(3, t)
+        return r0 + (L2 + L3) / 3
+    else:
+        raise ValueError('Wrong detector index')
 
 def arm_direction_lisa(i, t):
     '''
@@ -207,14 +168,13 @@ def arm_direction_lisa(i, t):
     Liang, arXiv:1901.09624v3
     '''
     T = 31536000.0  # seconds in a year
-    alpha_i = 2*np.pi*t/T - np.pi/12 - (i-1)*np.pi/3
-    phi = 2*np.pi*t/T
+    alpha_i = 2 * np.pi * t / T - np.pi / 12 - (i - 1) * np.pi / 3
+    phi = 2 * np.pi * t / T
 
-    ex = np.cos(phi)*np.sin(alpha_i)/2 - np.sin(phi)*np.cos(alpha_i)
-    ey = np.sin(phi)*np.sin(alpha_i)/2 + np.cos(phi)*np.cos(alpha_i)
-    ez = np.sqrt(3)*np.sin(alpha_i)/2
-    tmp = np.array([ex,ey,ez])
-    return np.einsum('ji',tmp)  # transpose
+    ex = np.cos(phi) * np.sin(alpha_i) / 2 - np.sin(phi) * np.cos(alpha_i)
+    ey = np.sin(phi) * np.sin(alpha_i) / 2 + np.cos(phi) * np.cos(alpha_i)
+    ez = np.sqrt(3) * np.sin(alpha_i) / 2
+    return np.array([ex, ey, ez]).transpose()
 
 
 def tf_spa(f, tc, m1, m2):
@@ -264,7 +224,7 @@ def transfer_function(f, uw, L):
                   np.sinc(0.5*f/f_transfer*(1+uw)) * np.exp(-0.5j * f/f_transfer*(1+uw)))
 
 
-def lisa_detector_tensor(name, f_array, theta, phi, tc, m1, m2, L):
+def lisa_detector_tensor(name, f_array, t_array, theta, phi, L):
     '''
     Returns a Nx3x3 numpy array:
       Detector tensor of LISA in ecliptic frame (of each frequency).
@@ -273,23 +233,24 @@ def lisa_detector_tensor(name, f_array, theta, phi, tc, m1, m2, L):
     Reference: 
     Liang, arXiv:1901.09624v3
     '''
-    t_array = tf_spa(f_array, tc, m1, m2)
     if name == 'lisa1':
         u = arm_direction_lisa(1, t_array)
         v = arm_direction_lisa(2, t_array)
     elif name == 'lisa2':
-        u = arm_direction_lisa(1, t_array)
+        u = - arm_direction_lisa(1, t_array)
         v = arm_direction_lisa(3, t_array)
     else:
         raise Exception('LISA supposed')
     
+    '''
     w = np.array([-np.sin(theta) * np.cos(phi),
                   -np.sin(theta) * np.sin(phi),
                   -np.cos(theta)])
 
     return 0.5 * (np.einsum('ai,aj,a->aij', u, u, transfer_function(f_array, np.einsum('ai,i->a', u, w), L)) - 
                   np.einsum('ai,aj,a->aij', v, v, transfer_function(f_array, np.einsum('ai,i->a', v, w), L)))
-
+    '''
+    return 0.5 * (np.einsum('ai,aj->aij', u, u) - np.einsum('ai,aj->aij', v, v))    # transfer function is nearly to 1 at low frequency
 
 def polarization_tensor_ecliptic(theta, phi, psi, polarization):
     '''
@@ -317,7 +278,7 @@ def polarization_tensor_ecliptic(theta, phi, psi, polarization):
         return 0
 
 
-def get_lisa_fresponse(name, hp, hc, theta, phi, psi, f_array, tc, m1, m2, L):
+def get_lisa_fresponse(name, hp, hc, theta, phi, psi, f_array, t_array, L):
     '''
     Get LISA response in frequency domain
 
@@ -325,7 +286,7 @@ def get_lisa_fresponse(name, hp, hc, theta, phi, psi, f_array, tc, m1, m2, L):
     hp, hc: waveform in source frame (f domain)
     theta, phi, psi: source location in ecliptic frame
     '''
-    D = lisa_detector_tensor(name, f_array, theta, phi, tc, m1, m2, L)
+    D = lisa_detector_tensor(name, f_array, t_array, theta, phi, L)
     ep = polarization_tensor_ecliptic(theta, phi, psi, 'plus')
     ec = polarization_tensor_ecliptic(theta, phi, psi, 'cross')
 
@@ -334,10 +295,17 @@ def get_lisa_fresponse(name, hp, hc, theta, phi, psi, f_array, tc, m1, m2, L):
     return fp * hp + fc * hc
 
 
-#%%
-'''
-test1=np.linspace(13,63,1e7)
-test2=np.linspace(16,101,1e7)
-testf=np.linspace(1,100,1e7)
-%timeit get_lisa1_fresponse(hp=test1,hc=test2,theta=2,phi=3,psi=4,f=testf,tc=1000000,m1=2e6,m2=3e6)
-'''
+def time_difference_to_sun(name, theta, phi, t):
+    '''
+    reference: arXiv:1803.03368v1
+    '''
+    c = 299792458
+    
+    name_map = {'lisa1': 1, 'lisa2': 2}
+    n = name_map[name]
+
+    Omega = -np.array([np.sin(theta) * np.cos(phi),
+                       np.sin(theta) * np.sin(phi),
+                       np.cos(theta)])
+    rnc = orbit_lisa(n, t) / c  # rn / c
+    return np.einsum('j,ij->i', Omega, rnc)

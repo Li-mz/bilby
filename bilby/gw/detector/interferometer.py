@@ -309,10 +309,18 @@ class Interferometer(object):
             phi = parameters['phi']
             psi = parameters['psi']
             tc = parameters['geocent_time']
+
             hp = waveform_polarizations['plus']
             hc = waveform_polarizations['cross']
-            signal_ifo = get_lisa_fresponse(self.name, hp, hc, theta, phi, psi, self.frequency_array, tc, m1, m2, self.length)
+
+            t = tf_spa(self.frequency_array, tc, m1, m2)
+            signal_ifo = get_lisa_fresponse(self.name, hp, hc, theta, phi, psi, self.frequency_array, t, self.length)
             signal_ifo *= self.strain_data.frequency_mask
+            
+            dt = time_difference_to_sun(self.name, theta, phi, t)[self.strain_data.frequency_mask]
+            signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
+                -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
+        
         else:
             signal = {}
             for mode in waveform_polarizations.keys():
