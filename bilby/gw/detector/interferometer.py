@@ -19,6 +19,7 @@ except ImportError:
     logger.warning("You do not have gwpy installed currently. You will "
                    " not be able to use some of the prebuilt functions.")
 
+from .detector_3g import *
 
 class Interferometer(object):
     """Class for the Interferometer """
@@ -294,34 +295,53 @@ class Interferometer(object):
         -------
         array_like: A 3x3 array representation of the detector response (signal observed in the interferometer)
         """
-        signal = {}
-        for mode in waveform_polarizations.keys():
-            det_response = self.antenna_response(
-                parameters['ra'],
-                parameters['dec'],
-                parameters['geocent_time'],
-                parameters['psi'], mode)
+        if self.name in ['lisa1', 'lisa2']:
+            '''
+            chirp_mass = parameters['chirp_mass']
+            mass_ratio = parameters['mass_ratio']
+            from ..conversion import chirp_mass_and_mass_ratio_to_total_mass, total_mass_and_mass_ratio_to_component_masses
+            total_mass = chirp_mass_and_mass_ratio_to_total_mass(chirp_mass, mass_ratio)
+            m1, m2 = total_mass_and_mass_ratio_to_component_masses(mass_ratio, total_mass)
+            '''
+            m1 = parameters['mass_1']
+            m2 = parameters['mass_2']
+            theta = parameters['theta']
+            phi = parameters['phi']
+            psi = parameters['psi']
+            tc = parameters['geocent_time']
+            hp = waveform_polarizations['plus']
+            hc = waveform_polarizations['cross']
+            signal_ifo = get_lisa_fresponse(self.name, hp, hc, theta, phi, psi, self.frequency_array, tc, m1, m2, self.length)
+            signal_ifo *= self.strain_data.frequency_mask
+        else:
+            signal = {}
+            for mode in waveform_polarizations.keys():
+                det_response = self.antenna_response(
+                   parameters['ra'],
+                   parameters['dec'],
+                   parameters['geocent_time'],
+                   parameters['psi'], mode)
 
-            signal[mode] = waveform_polarizations[mode] * det_response
-        signal_ifo = sum(signal.values())
+                signal[mode] = waveform_polarizations[mode] * det_response
+            signal_ifo = sum(signal.values())
+    
+            signal_ifo *= self.strain_data.frequency_mask
 
-        signal_ifo *= self.strain_data.frequency_mask
+            time_shift = self.time_delay_from_geocenter(
+                parameters['ra'], parameters['dec'], parameters['geocent_time'])
 
-        time_shift = self.time_delay_from_geocenter(
-            parameters['ra'], parameters['dec'], parameters['geocent_time'])
+            # Be careful to first substract the two GPS times which are ~1e9 sec.
+            # And then add the time_shift which varies at ~1e-5 sec
+            dt_geocent = parameters['geocent_time'] - self.strain_data.start_time
+            dt = dt_geocent + time_shift
 
-        # Be careful to first substract the two GPS times which are ~1e9 sec.
-        # And then add the time_shift which varies at ~1e-5 sec
-        dt_geocent = parameters['geocent_time'] - self.strain_data.start_time
-        dt = dt_geocent + time_shift
+            signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
+                -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
 
-        signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
-            -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
-
-        signal_ifo[self.strain_data.frequency_mask] *= self.calibration_model.get_calibration_factor(
-            self.strain_data.frequency_array[self.strain_data.frequency_mask],
-            prefix='recalib_{}_'.format(self.name), **parameters)
-
+            signal_ifo[self.strain_data.frequency_mask] *= self.calibration_model.get_calibration_factor(
+                self.strain_data.frequency_array[self.strain_data.frequency_mask],
+                prefix='recalib_{}_'.format(self.name), **parameters)
+        
         return signal_ifo
 
     def inject_signal(self, parameters, injection_polarizations=None,
