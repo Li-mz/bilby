@@ -369,7 +369,7 @@ def detector_tensor_lisa(name, t):
         return detector_tensor_lisa2(t)
     elif name == 'lisaa':
         return detector_tensor_lisaa(t)
-    elif name == 'lisae'
+    elif name == 'lisae':
         return detector_tensor_lisae(t)
     else:
         raise Exception("Name 'lisa1', 'lisa2', 'lisaa', or 'lisae' supposed.")
@@ -442,10 +442,10 @@ def tianqin_spacecraft(n, t):
     alpha = 2 * np.pi * fm * t
     alpha_n = 2 * np.pi * fsc * t + 2 * np.pi / 3 * (n - 1)
 
-    x = R1 * (np.cos(phi_s) * np.sin(theta_s) * np.sin(alpha_n) + np.cos(alpha_n) * np.sin(phi_s)) +
-        R * np.cos(alpha) + 0.5 * R * e * (2 * np.cos(2 * alpha) - 3) - 1.5 * R * e ** 2 * np.cos(alpha) * (np.sin(alpha) ** 2)
-    y = R1 * (np.sin(phi_s) * np.sin(theta_s) * np.sin(alpha_n) - np.cos(alpha_n) * np.cos(phi_s)) +
-        R * np.sin(alpha) + 0.5 * R * e * np.sin(2 * alpha) + 0.25 * R * e ** 2 * (3 * np.cos(2 * alpha) - 1) * np.sin(alpha)
+    x = R1 * (np.cos(phi_s) * np.sin(theta_s) * np.sin(alpha_n) + np.cos(alpha_n) * np.sin(phi_s)) + R * np.cos(
+        alpha) + 0.5 * R * e * (2 * np.cos(2 * alpha) - 3) - 1.5 * R * e ** 2 * np.cos(alpha) * (np.sin(alpha) ** 2)
+    y = R1 * (np.sin(phi_s) * np.sin(theta_s) * np.sin(alpha_n) - np.cos(alpha_n) * np.cos(phi_s)) + R * np.sin(
+        alpha) + 0.5 * R * e * np.sin(2 * alpha) + 0.25 * R * e ** 2 * (3 * np.cos(2 * alpha) - 1) * np.sin(alpha)
     z = -R1 * np.sin(alpha_n) * np.cos(theta_s)
     
     return np.array([x, y, z]).transpose()
@@ -538,7 +538,7 @@ def get_tianqin_fresponse(name, waveform, theta, phi, psi, t):
     
     D = detector_tensor_tianqin(name, t)
     signal = {}
-    for mode, wave in waveform:
+    for mode, wave in waveform.items():
         polarization_tensor = polarization_tensor_ecliptic(theta, phi, psi, mode)
         F = np.einsum('aij,ij->a', D, polarization_tensor)
         signal[mode] = wave * F
