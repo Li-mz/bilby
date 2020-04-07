@@ -1322,6 +1322,11 @@ class Result(object):
             weights.append(weight)
 
         return weights
+    
+    def convert_result_mass(self):
+        for i, row in self.posterior.iterrows():
+            if row.mass_1 < row.mass_2:
+                row.mass_1, row.mass_2 = row.mass_2, row.mass_1
 
 
 class ResultList(list):
