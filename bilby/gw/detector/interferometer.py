@@ -295,33 +295,10 @@ class Interferometer(object):
         -------
         array_like: A 3x3 array representation of the detector response (signal observed in the interferometer)
         """
-        if self.name in ['lisa1', 'lisa2']:
-            '''
-            chirp_mass = parameters['chirp_mass']
-            mass_ratio = parameters['mass_ratio']
-            from ..conversion import chirp_mass_and_mass_ratio_to_total_mass, total_mass_and_mass_ratio_to_component_masses
-            total_mass = chirp_mass_and_mass_ratio_to_total_mass(chirp_mass, mass_ratio)
-            m1, m2 = total_mass_and_mass_ratio_to_component_masses(mass_ratio, total_mass)
-            '''
-            m1 = parameters['mass_1']
-            m2 = parameters['mass_2']
-            theta = parameters['theta']
-            phi = parameters['phi']
-            psi = parameters['psi']
-            tc = parameters['geocent_time']
+        space_interfeometers = ['lisa1', 'lisa2', 'lisaa', 'lisae',
+                                'tianqin_a', 'tianqin_e']
 
-            hp = waveform_polarizations['plus']
-            hc = waveform_polarizations['cross']
-
-            t = tf_spa(self.frequency_array, tc, m1, m2)
-            signal_ifo = get_lisa_fresponse(self.name, hp, hc, theta, phi, psi, self.frequency_array, t, self.length)
-            signal_ifo *= self.strain_data.frequency_mask
-            
-            dt = time_difference_to_sun(self.name, theta, phi, t)[self.strain_data.frequency_mask]
-            signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
-                -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
-        
-        else:
+        if self.name not in space_interfeometers:
             signal = {}
             for mode in waveform_polarizations.keys():
                 det_response = self.antenna_response(
@@ -349,7 +326,40 @@ class Interferometer(object):
             signal_ifo[self.strain_data.frequency_mask] *= self.calibration_model.get_calibration_factor(
                 self.strain_data.frequency_array[self.strain_data.frequency_mask],
                 prefix='recalib_{}_'.format(self.name), **parameters)
-        
+        else:
+            theta = parameters['theta']
+            phi = parameters['phi']
+            psi = parameters['psi']
+            tc = parameters['geocent_time']
+            hp = ['plus']
+            hc = waveform_polarizations['cross']
+            
+            if 'mass_1' in parameters:
+                m1 = parameters['mass_1']
+                m2 = parameters['mass_2']
+                t = tf_spa(self.frequency_array, tc, m1, m2)
+            else:
+                mc = parameters['chirp_mass']
+                eta = parameters['symmetric_mass_ratio']
+                t = tf_spa_chirp(self.frequency_array, tc, mc, eta)
+            
+            if 'lisa' in self.name:
+                signal_ifo = get_lisa_fresponse(self.name, hp, hc, theta, phi, psi, t)
+            elif 'tianqin' in self.name:
+                signal_ifo = get_tianqin_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
+            
+            signal_ifo *= self.strain_data.frequency_mask
+            
+            if self.name in ['lisa1', 'lisa2']:
+                arm_i = {'lisa1': 1, 'lisa2': 2}
+                dt = lisa_time_difference_to_sun(thata, phi, t, arm_i[i])[self.strain_data.frequency_mask]
+            elif 'lisa' in self.name:
+                dt = lisa_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
+            elif 'tianqin' in self.name:
+                dt = tianqin_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
+                signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
+                    -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
+            
         return signal_ifo
 
     def inject_signal(self, parameters, injection_polarizations=None,
