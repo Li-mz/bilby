@@ -264,7 +264,7 @@ def orbit_lisacenter(t):
     R = 1.4959787e11  # 1AU, unit:m
     L = 2.5e9         # arm length of LISA
     T = 31536000.0    # seconds in a year
-    phi = 2*np.pi*t/T
+    phi = 2 * np.pi * t / T + 20 * np.pi / 180
 
     # center of mass
     r0 = np.array([R*np.cos(phi), R*np.sin(phi), np.zeros(len(t))])
@@ -283,7 +283,7 @@ def orbit_lisa(n,t):
     R = 1.4959787e11  # 1AU, unit:m
     L = 2.5e9         # arm length of LISA
     T = 31536000.0    # seconds in a year
-    phi = 2*np.pi*t/T
+    phi = 2 * np.pi * t / T
 
     # center of mass
     r0 = np.array([R*np.cos(phi), R*np.sin(phi), np.zeros(len(t))])
