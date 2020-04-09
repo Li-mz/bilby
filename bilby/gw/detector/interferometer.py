@@ -357,8 +357,11 @@ class Interferometer(object):
                 dt = lisa_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
             elif 'tianqin' in self.name:
                 dt = tianqin_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
-                signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
-                    -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
+            
+            dt_geocent = parameters['geocent_time'] - self.strain_data.start_time  # not really "geo"cent
+            dt += dt_geocent
+            signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
+                -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
             
         return signal_ifo
 
