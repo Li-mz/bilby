@@ -331,8 +331,6 @@ class Interferometer(object):
             phi = parameters['phi']
             psi = parameters['psi']
             tc = parameters['geocent_time']
-            hp = ['plus']
-            hc = waveform_polarizations['cross']
             
             if 'mass_1' in parameters:
                 m1 = parameters['mass_1']
@@ -344,7 +342,7 @@ class Interferometer(object):
                 t = tf_spa_chirp(self.frequency_array, tc, mc, eta)
             
             if 'lisa' in self.name:
-                signal_ifo = get_lisa_fresponse(self.name, hp, hc, theta, phi, psi, t)
+                signal_ifo = get_lisa_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
             elif 'tianqin' in self.name:
                 signal_ifo = get_tianqin_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
             

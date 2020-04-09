@@ -399,7 +399,7 @@ def lisa_time_difference_to_sun_center(theta, phi, t):
     return np.einsum('j,ij->i', Omega, r0)
 
 
-def get_lisa_fresponse(name, hp, hc, theta, phi, psi, t):
+def get_lisa_fresponse(name, waveform, theta, phi, psi, t):
     '''
     Get LISA's response in freq domain
 
@@ -410,12 +410,12 @@ def get_lisa_fresponse(name, hp, hc, theta, phi, psi, t):
     Note that this function can be also used to calculate time domain response, as long as hp&hc are given in time domain with cooresponding timeseries t.
     '''
     D = detector_tensor_lisa(name, t)
-    ep = polarization_tensor_ecliptic(theta, phi, psi, 'plus')
-    ec = polarization_tensor_ecliptic(theta, phi, psi, 'cross')
-
-    fp = np.einsum('aij,ij->a', D, ep)
-    fc = np.einsum('aij,ij->a', D, ec)
-    return fp * hp + fc * hc
+    signal = {}
+    for mode, wave in waveform.items():
+        polarization_tensor = polarization_tensor_ecliptic(theta, phi, psi, mode)
+        F = np.einsum('aij,ij->a', D, polarization_tensor)
+        signal[mode] = wave * F
+    return sum(signal.values())
 
 # %%
 # TianQin orbit, arm direction and detector tensor
