@@ -1,91 +1,58 @@
 #%%
 '''
-Calculate PSD & antenna pattern functions of 3rd-genertion GW detectors LISA, TianQin and ET.
+Calculate response for space detectors LISA, TianQin.
 '''
 
 import numpy as np
-import matplotlib.pyplot as plt 
-import bilby
-# %%  LISA noise
-# reference: Niu, arXiv:1910.10592
-def sacc_lisa(f):
-    '''
-    return acceleration noise of LISA
-    f:Hz
-    '''
-    A = 9e-30/(2*np.pi*f)**4
-    B = (6e-4/f)**2
-    C = (2.22e-5/f)**8
-    return A*(1+B*(1+C))
+import matplotlib.pyplot as plt
 
-def sother_lisa(f):
-    '''
-    return other noise of LISA which is a const.
-    '''
-    return 8.899e-23
+# %% PV waveform
+from pycbc.waveform import get_fd_waveform
+from ..waveform_generator import WaveformGenerator
+from ..conversion import convert_to_lal_binary_black_hole_parameters
 
-def scon_lisa(f):
-    '''
-    return confusion noise of unresolved binaries for LISA.
-    f:Hz
-    '''
-    A = 3.0/20*3.2665e-44
-    alpha = 1.183
-    s1 = 3014.3
-    s2 = 2957.7
-    kappa = 2.0928e-3
+approx = 'IMRPhenomXHM'
 
-    B = np.exp(-s1*(f**alpha))
-    C = f**(-7.0/3)
-    D = 1-np.tanh(s2*(f-kappa))
+def PV_waveform(farray, mass_1, mass_2,
+                phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
+                spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, A, mode_array, **kwargs):
+    flow = 1e-4
+    fhigh = farray[-1]
+    deltaf = farray[1] - farray[0]
 
-    return 0.5*A*B*C*D
+    waveform_polarizations = {}
+    hp, hc = \
+    get_fd_waveform(approximant=approx,
+        mass1=mass_1, mass2=mass_2,
+        distance=luminosity_distance,
+        inclination=iota, coa_phase=phase,
+        spin1x=spin1x, spin1y=spin1y, spin1z=spin1z,
+        spin2x=spin2x, spin2y=spin2y, spin2z=spin2z,
+        delta_f=deltaf, f_lower=flow, f_final=fhigh,
+        mode_array=mode_array)
 
-def sn_lisa(f):
-    '''
-    return total PSD of LISA.
-    f:Hz
-    '''
-    L = 2.5e9
-    fstar = 0.019
-    return (4*sacc_lisa(f)+8.899e-23)/(L**2) * (1+(f/(1.29*fstar))**2) +scon_lisa(f)
+    dphi1 = A * (np.pi * farray)** 2
+    waveform_polarizations['plus'] = (hp + hc * dphi1).numpy()
+    waveform_polarizations['cross'] = (hc - hp * dphi1).numpy()
+    return waveform_polarizations
 
 
-# %%  ET noise
-# reference: Zhao, arXiv:1009.0206
-def sn_et(f):
-    S0 = 1.449e-52
-    p1 = -4.05
-    p2 = -0.69
-    a1 = 185.62
-    a2 = 232.56
-    b1 = 31.18
-    b2 = -64.72
-    b3 = 52.24
-    b4 = -42.16
-    b5 = 10.17
-    b6 = 11.53
-    c1 = 13.58
-    c2 = -36.46
-    c3 = 18.56
-    c4 = 27.43
-    x = f/200.0
-    return S0*(x**p1 + a1*x**p2 + a2*(1+b1*x+b2*x**2+b3*x**3+b4*x**4+b5*x**5+b6*x**6)/(1+c1*x+c2*x**2+c3*x**3+c4*x**4))
+def PV_waveform_from_mode(mode_array):
+    def waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
+                 spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, A, **kwargs):
+        return PV_waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
+                           spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, A, mode_array, **kwargs)
+    
+    return waveform
 
-# %% TianQin noise
-# reference: Niu, arXiv:1910.10592
-def sn_tianqin(f):
-    Sx = 1e-24
-    L = 1.73e8
-    fstar = 0.28
-    Sa = 1e-30
+duration = 2**18
+sampling_frequency = 1/16.
 
-    A = Sx/L**2
-    B = 4*Sa/(2*np.pi*f)**4/L**2*(1+1e-4/f)
-    C = 1+(f/1.29/fstar)**2
-
-    return (A+B)*C
-
+def PV_generator_from_mode(mode_array):
+    return WaveformGenerator(
+        duration=duration, sampling_frequency=sampling_frequency,
+        frequency_domain_source_model=PV_waveform_from_mode(mode_array),
+        parameter_conversion=convert_to_lal_binary_black_hole_parameters)
 
 # %%  Antenna pattern function in detector frame
 # References:
@@ -116,13 +83,9 @@ def fcross(gamma, theta, phi, psi):
     C = np.cos(theta)*np.sin(2*phi)*np.cos(2*psi)
     return A*(B+C)
 
-# %%  Antenna pattern function in ecliptic frame 
-# References:
-# Liang, arXiv:1901.09624v3
-# Niu, arXiv:1910.10592
-# Definition of antenna pattern function is $D_{ij}e^{ij}$, where Dij is detector tensor and eij is polarization tensor. In Liang's paper, these two tensor can be expressed in ecliptic frame with theta_e, phi_e, psi_e
+# %% Time t corresponding frequency f, using SPA.
 
-def tf_spa(f,tc,m1,m2):
+def tf_spa(f, tc, m1, m2):
     '''
     h(t) = F_+(t)*h_+(t) + F_x(t)*h_x(t)
     Fourier Transfrom, we get
@@ -153,46 +116,27 @@ def tf_spa(f,tc,m1,m2):
         +(-10052469856691/23471078400+128/3*pi**2+6848/105*0.577+3424/105*np.log(16*v**2)+(3147553127/3048192-451/12*pi**2)*eta-15211/1728*eta**2+25565/1296*eta**3)*v**(6)
         +(-15419335/127008-75703/756*eta+14809/378*eta**2)*pi*v**(7))
 
-    t= t.astype('float64')
+    t = t.astype('float64')
 
     return t
 
 
-def tf_spa_chirp(f,tc,mc,eta):
+def tf_spa_from_mode(f, tc, m1, m2, mode):
     '''
-    h(t) = F_+(t)*h_+(t) + F_x(t)*h_x(t)
-    Fourier Transfrom, we get
-    h(f) = F_+(f)*h_+(f) + F_x(f)*h_x(f)
-    However, antenna response in f domain F(f) is hard to obtain, so we use stationary phase approximation(SPA), changing F(f) into F(t(f)) which is a function in time domain.
-
-    This is the function calculating the t(f).
-
-    unit: f-Hz, tc-s, m1m2-solar mass
-
-    See (A12) in Niu, arXiv:1910.10592
+    See (4.8) in arXiv:2001.10914v1
     '''
+    m = mode[1]
+    return tf_spa(f / m, tc, m1, m2)
 
-    f[0] = f[1] / 1e4
 
-    eta = eta*2e30
-    M_c = mc*2e30
-    M = M_c/eta**0.6
-    G = 6.67e-11
-    c = 299792458
-    pi = np.pi
-    v = (G*M*2*pi*f/c**3)**(1/3)
-    v = v.astype('float64')
-    t =  tc - c**(5)*5/256*(G*M_c)**(-5/3)*(2*pi*f)**(-8/3)*(1*v**(0)
-        +4/3*(743/336+(11/4)*eta)*v**(2)
-        +(-32*pi/5)*v**(3)
-        +(3058673/508032+5429/504*eta+617/72*eta**2)*v**(4)
-        +(-7729/252+13/3*eta)*pi*v**(5) 
-        +(-10052469856691/23471078400+128/3*pi**2+6848/105*0.577+3424/105*np.log(16*v**2)+(3147553127/3048192-451/12*pi**2)*eta-15211/1728*eta**2+25565/1296*eta**3)*v**(6)
-        +(-15419335/127008-75703/756*eta+14809/378*eta**2)*pi*v**(7))
-
-    t= t.astype('float64')
-
-    return t
+def get_mode_from_name(name):
+    try:
+        mode = [int(i) for i in name.split('_')[-1]]
+        if len(mode) != 2:
+            raise Exception
+        return mode
+    except:
+        return [2, 2]
 
 # %%
 # Polarization tensor in ecliptic frame
@@ -363,6 +307,7 @@ def detector_tensor_lisae(t):
 
 
 def detector_tensor_lisa(name, t):
+    '''
     if name == 'lisa1':
         return detector_tensor_lisa1(t)
     elif name == 'lisa2':
@@ -371,8 +316,13 @@ def detector_tensor_lisa(name, t):
         return detector_tensor_lisaa(t)
     elif name == 'lisae':
         return detector_tensor_lisae(t)
+    '''
+    if name.startswith('lisa_a'):
+        return detector_tensor_lisaa(t)
+    elif name.startswith('lisa_e'):
+        return detector_tensor_lisae(t)
     else:
-        raise Exception("Name 'lisa1', 'lisa2', 'lisaa', or 'lisae' supposed.")
+        raise Exception("Name 'lisa_a_xxx' or 'lisa_e_xxx' supposed.")
 
 
 def lisa_time_difference_to_sun(theta, phi, t, n):
@@ -411,10 +361,10 @@ def get_lisa_fresponse(name, waveform, theta, phi, psi, t):
     '''
     D = detector_tensor_lisa(name, t)
     signal = {}
-    for mode, wave in waveform.items():
+    for mode in ['plus', 'cross']:
         polarization_tensor = polarization_tensor_ecliptic(theta, phi, psi, mode)
         F = np.einsum('aij,ij->a', D, polarization_tensor)
-        signal[mode] = wave * F
+        signal[mode] = waveform[mode] * F
     return sum(signal.values())
 
 # %%
@@ -517,12 +467,12 @@ def detector_tensor_tianqin(name, t):
     n2 = arm_direction_tianqin(2, t)
     n3 = arm_direction_tianqin(3, t)
 
-    if name == 'tianqin_a':
+    if name.startswith('tianqin_a'):
         return 1 / 6 * (np.einsum('ai,aj->aij', n1, n1) - 2 * np.einsum('ai,aj->aij', n2, n2) + np.einsum('ai,aj->aij', n3, n3))
-    elif name == 'tianqin_e':
+    elif name.startswith('tianqin_e'):
         return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
     else:
-        raise Exception("Name 'tianqin_a', or 'tianqin_e' supposed.")
+        raise Exception("Name 'tianqin_a_xxx', or 'tianqin_e_xxx' supposed.")
 
 
 def get_tianqin_fresponse(name, waveform, theta, phi, psi, t):
@@ -538,8 +488,8 @@ def get_tianqin_fresponse(name, waveform, theta, phi, psi, t):
     
     D = detector_tensor_tianqin(name, t)
     signal = {}
-    for mode, wave in waveform.items():
+    for mode in ['plus', 'cross']:
         polarization_tensor = polarization_tensor_ecliptic(theta, phi, psi, mode)
         F = np.einsum('aij,ij->a', D, polarization_tensor)
-        signal[mode] = wave * F
+        signal[mode] = waveform[mode] * F
     return sum(signal.values())

@@ -19,7 +19,7 @@ except ImportError:
     logger.warning("You do not have gwpy installed currently. You will "
                    " not be able to use some of the prebuilt functions.")
 
-from .detector_3g import *
+from .space_interfeometer_response import *
 
 class Interferometer(object):
     """Class for the Interferometer """
@@ -295,10 +295,15 @@ class Interferometer(object):
         -------
         array_like: A 3x3 array representation of the detector response (signal observed in the interferometer)
         """
-        space_interfeometers = ['lisa1', 'lisa2', 'lisaa', 'lisae',
-                                'tianqin_a', 'tianqin_e']
+        
+        is_space_ifo = False
+        space_interfeometers = ['lisa', 'tianqin']
+        for name in space_interfeometers:
+            if name in self.name.lower():
+                is_space_ifo = True
+                break
 
-        if self.name not in space_interfeometers:
+        if not is_space_ifo:
             signal = {}
             for mode in waveform_polarizations.keys():
                 det_response = self.antenna_response(
@@ -327,19 +332,18 @@ class Interferometer(object):
                 self.strain_data.frequency_array[self.strain_data.frequency_mask],
                 prefix='recalib_{}_'.format(self.name), **parameters)
         else:
+            m1 = parameters['mass_1']
+            m2 = parameters['mass_2']
             theta = parameters['theta']
             phi = parameters['phi']
             psi = parameters['psi']
             tc = parameters['geocent_time']
-            
-            if 'mass_1' in parameters:
-                m1 = parameters['mass_1']
-                m2 = parameters['mass_2']
-                t = tf_spa(self.frequency_array, tc, m1, m2)
-            else:
-                mc = parameters['chirp_mass']
-                eta = parameters['symmetric_mass_ratio']
-                t = tf_spa_chirp(self.frequency_array, tc, mc, eta)
+
+            mode = get_mode_from_name(self.name)
+            t = tf_spa_from_mode(self.frequency_array, tc, m1, m2, mode)
+            if 'A' not in parameters:
+                parameters['A'] = 0
+            waveform_polarizations = PV_generator_from_mode([mode]).frequency_domain_strain(parameters)
             
             if 'lisa' in self.name:
                 signal_ifo = get_lisa_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
@@ -347,11 +351,12 @@ class Interferometer(object):
                 signal_ifo = get_tianqin_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
             
             signal_ifo *= self.strain_data.frequency_mask
-            
+            '''
             if self.name in ['lisa1', 'lisa2']:
                 arm_i = {'lisa1': 1, 'lisa2': 2}
-                dt = lisa_time_difference_to_sun(thata, phi, t, arm_i[i])[self.strain_data.frequency_mask]
-            elif 'lisa' in self.name:
+                dt = lisa_time_difference_to_sun(theta, phi, t, arm_i[self.name])[self.strain_data.frequency_mask]
+            '''
+            if 'lisa' in self.name:
                 dt = lisa_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
             elif 'tianqin' in self.name:
                 dt = tianqin_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
