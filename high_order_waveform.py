@@ -117,7 +117,7 @@ def tianqin_interferometer_from_mode(mode_array, injection_parameters):
     GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
     frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
 
-    mode_str = ''.join([''.join(str(mode)) for mode in mode_array])
+    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
 
     psd_tianqin = sn_tianqin(frequencies)
     tianqin_a = bilby.gw.detector.Interferometer(
@@ -143,7 +143,7 @@ def lisa_interferometer_from_mode(mode_array, injection_parameters):
     GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
     frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
 
-    mode_str = ''.join([''.join(str(mode)) for mode in mode_array])
+    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
 
     psd_lisa = sn_lisa(frequencies)
     lisa_a = bilby.gw.detector.Interferometer(
