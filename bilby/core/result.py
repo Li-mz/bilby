@@ -1324,10 +1324,9 @@ class Result(object):
         return weights
     
     def convert_result_mass(self):
-        for i in range(self.posterior.shape[0]):
-            m1, m2 = self.posterior['mass_1'][i], self.posterior['mass_2'][i]
-            if m1 < m2:
-                self.posterior['mass_1'][i], self.posterior['mass_2'][i] = m2, m1
+        reversed_mass = self.posterior.mass_1 < self.posterior.mass_2
+        self.posterior.loc[reversed_mass, 'mass_1'], self.posterior[reversed_mass, 'mass_2'] = \
+            self.posterior.loc[reversed_mass, 'mass_2'], self.posterior.loc[reversed_mass, 'mass_1']
 
 
 class ResultList(list):
