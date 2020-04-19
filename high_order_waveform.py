@@ -199,8 +199,8 @@ priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi, b
 '''
 priors['luminosity_distance'] = bilby.core.prior.Uniform(minimum = 1e3, maximum = 1e5, name='luminosity_distance')
 priors['geocent_time'] = bilby.core.prior.Uniform(
-    minimum=injection_parameters['geocent_time'] - 1,
-    maximum=injection_parameters['geocent_time'] + 1,
+    minimum=injection_parameters['geocent_time'] - 10,
+    maximum=injection_parameters['geocent_time'] + 10,
     name='geocent_time', latex_label='$t_c$', unit='$s$')
 '''
 for key in ['spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y','spin2z']:
