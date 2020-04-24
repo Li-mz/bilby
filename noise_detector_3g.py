@@ -83,3 +83,16 @@ def sn_tianqin(f):
     C = 1+(f/1.29/fstar)**2
 
     return (A+B)*C
+
+# %% Taiji noise
+# Reference: arXiv:2002.06360
+def sn_taiji(f):
+    c = 299792458.0
+    L = 3e9
+    fstar = c / (2 * np.pi * L)
+    Sx = 64e-24
+    Sa = 9e-30
+
+    S_N = Sx / L**2 + 4 * Sa / (2*np.pi*f)** 4 / L**2 * (1 + 1e-4/f)
+    R = 3 / 10 / (1 + 0.6 * (f / fstar)** 2)
+    return S_N / R

@@ -297,7 +297,7 @@ class Interferometer(object):
         """
         
         is_space_ifo = False
-        space_interfeometers = ['lisa', 'tianqin']
+        space_interfeometers = ['lisa', 'tianqin', 'taiji']
         for name in space_interfeometers:
             if name in self.name.lower():
                 is_space_ifo = True
@@ -349,17 +349,17 @@ class Interferometer(object):
                 signal_ifo = get_lisa_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
             elif 'tianqin' in self.name:
                 signal_ifo = get_tianqin_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
+            elif 'taiji' in self.name:
+                signal_ifo = get_taiji_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
             
             signal_ifo *= self.strain_data.frequency_mask
-            '''
-            if self.name in ['lisa1', 'lisa2']:
-                arm_i = {'lisa1': 1, 'lisa2': 2}
-                dt = lisa_time_difference_to_sun(theta, phi, t, arm_i[self.name])[self.strain_data.frequency_mask]
-            '''
+
             if 'lisa' in self.name:
                 dt = lisa_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
             elif 'tianqin' in self.name:
                 dt = tianqin_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
+            elif 'taiji' in self.name:
+                dt = taiji_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
             
             dt_geocent = parameters['geocent_time'] - self.strain_data.start_time  # not really "geo"cent
             dt += dt_geocent

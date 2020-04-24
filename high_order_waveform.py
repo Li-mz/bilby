@@ -2,7 +2,7 @@
 import bilby
 import numpy as np
 import matplotlib.pyplot as plt
-from noise_detector_3g import sn_lisa, sn_tianqin
+from noise_detector_3g import sn_lisa, sn_tianqin, sn_taiji
 
 import pycbc
 import pycbc.noise
@@ -87,8 +87,8 @@ injection_parameters = dict(mass_1 = 5e6, mass_2 = 3e6, phase=0, iota=1.3, theta
 duration = 2**18
 sampling_frequency = 1/16.
 
-np.random.seed(438)
-outdir = 'TianQin_LISA_highorder'
+np.random.seed(567)
+outdir = 'TianQin_LISA'
 label = 'PV'
 bilby.core.utils.setup_logger(outdir=outdir, label=label)
 
@@ -108,32 +108,6 @@ def PV_generator_from_mode(mode_array):
         duration=duration, sampling_frequency=sampling_frequency,
         frequency_domain_source_model=PV_waveform_from_mode(mode_array),
         parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters)
-
-
-def tianqin_interferometer_from_mode(mode_array, injection_parameters):
-    L_tianqin = 1.7e5
-
-    GR_generator = GR_generator_from_mode(mode_array)
-    GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
-    frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
-
-    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
-
-    psd_tianqin = sn_tianqin(frequencies)
-    tianqin_a = bilby.gw.detector.Interferometer(
-        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_tianqin),
-        name='tianqin_a_' + mode_str, length=L_tianqin,
-        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
-        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=2., yarm_azimuth=125.)
-
-    tianqin_e = bilby.gw.detector.Interferometer(
-        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_tianqin),
-        name='tianqin_e_' + mode_str, length=L_tianqin,
-        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
-        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=0, yarm_azimuth=60)
-    return tianqin_a, tianqin_e
 
 
 def lisa_interferometer_from_mode(mode_array, injection_parameters):
@@ -162,7 +136,59 @@ def lisa_interferometer_from_mode(mode_array, injection_parameters):
     return lisa_a, lisa_e
 
 
-modes=[[[2, 2]],
+def tianqin_interferometer_from_mode(mode_array, injection_parameters):
+    L_tianqin = 1.7e5
+
+    GR_generator = GR_generator_from_mode(mode_array)
+    GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
+    frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
+
+    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
+
+    psd_tianqin = sn_tianqin(frequencies)
+    tianqin_a = bilby.gw.detector.Interferometer(
+        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
+            frequency_array=frequencies, psd_array=psd_tianqin),
+        name='tianqin_a_' + mode_str, length=L_tianqin,
+        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
+        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=2., yarm_azimuth=125.)
+
+    tianqin_e = bilby.gw.detector.Interferometer(
+        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
+            frequency_array=frequencies, psd_array=psd_tianqin),
+        name='tianqin_e_' + mode_str, length=L_tianqin,
+        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
+        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=0, yarm_azimuth=60)
+    return tianqin_a, tianqin_e
+
+
+def taiji_interferometer_from_mode(mode_array, injection_parameters):
+    L_taiji = 3e9
+
+    GR_generator = GR_generator_from_mode(mode_array)
+    GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
+    frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
+
+    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
+
+    psd_taiji = sn_taiji(frequencies)
+    taiji_a = bilby.gw.detector.Interferometer(
+        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
+            frequency_array=frequencies, psd_array=psd_taiji),
+        name='taiji_a_' + mode_str, length=L_taiji,
+        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
+        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=2., yarm_azimuth=125.)
+
+    taiji_e = bilby.gw.detector.Interferometer(
+        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
+            frequency_array=frequencies, psd_array=psd_taiji),
+        name='taiji_e_' + mode_str, length=L_taiji,
+        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
+        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=0, yarm_azimuth=60)
+    return taiji_a, taiji_e
+
+# %%
+modes=[[[2, 2]]
        [[2, 1]],
        [[3, 3]],
        [[4, 4]],
@@ -171,11 +197,11 @@ modes=[[[2, 2]],
 ifos = bilby.gw.detector.InterferometerList([])
 for mode in modes:
     lisaa, lisae = lisa_interferometer_from_mode(mode, injection_parameters)
-    tianqin_a, tianqin_e = tianqin_interferometer_from_mode(mode, injection_parameters)
+    taiji_a, taiji_e = taiji_interferometer_from_mode(mode, injection_parameters)
     ifos.append(lisaa)
     ifos.append(lisae)
-    ifos.append(tianqin_a)
-    ifos.append(tianqin_e)
+    ifos.append(taiji_a)
+    ifos.append(taiji_e)
 
 ifos.set_strain_data_from_power_spectral_densities(
     sampling_frequency=sampling_frequency, duration=duration,
@@ -190,13 +216,13 @@ for key, value in injection_parameters.items():
 
 priors['mass_1'] = bilby.core.prior.Uniform(minimum=1e5, maximum=1e7, name='mass_1')
 priors['mass_2'] = bilby.core.prior.Uniform(minimum=1e5, maximum=1e7, name='mass_2')
-'''
+
 priors['phase'] = bilby.core.prior.Uniform(name='phase', minimum=0, maximum=2*np.pi, boundary='periodic')
 priors['iota'] = bilby.core.prior.Sine(name='iota')
 priors['theta'] = bilby.core.prior.Uniform(name='theta', minimum=0, maximum=np.pi, boundary='periodic')
 priors['phi'] = bilby.core.prior.Uniform(name='phi', minimum=0, maximum=2*np.pi, boundary='periodic')
 priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
-'''
+
 priors['luminosity_distance'] = bilby.core.prior.Uniform(minimum = 1e3, maximum = 1e5, name='luminosity_distance')
 priors['geocent_time'] = bilby.core.prior.Uniform(
     minimum=injection_parameters['geocent_time'] - 10,

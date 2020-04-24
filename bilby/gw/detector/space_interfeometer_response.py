@@ -493,3 +493,90 @@ def get_tianqin_fresponse(name, waveform, theta, phi, psi, t):
         F = np.einsum('aij,ij->a', D, polarization_tensor)
         signal[mode] = waveform[mode] * F
     return sum(signal.values())
+
+# %% Taiji response
+def arm_direction_taiji(i,t):
+    '''
+    Calculate the unit vector along the i-th arm of taiji in ecliptic frame. 
+    '''
+    T = 31536000.0  # seconds in a year
+    alpha_i = 2*np.pi*t/T - np.pi/12 - (i-1)*np.pi/3
+    phi = 2*np.pi*t/T
+
+    ex = np.cos(phi)*np.sin(alpha_i)/2 - np.sin(phi)*np.cos(alpha_i)
+    ey = np.sin(phi)*np.sin(alpha_i)/2 + np.cos(phi)*np.cos(alpha_i)
+    ez = np.sqrt(3)*np.sin(alpha_i)/2
+    tmp = np.array([ex,ey,ez])
+    return np.einsum('ji',tmp)  # transpose
+
+
+def orbit_taijicenter(t):
+    R = 1.4959787e11  # 1AU, unit:m
+    L = 2.5e9         # arm length of taiji
+    T = 31536000.0    # seconds in a year
+    phi = 2 * np.pi * t / T - 20 * np.pi / 180
+
+    # center of mass
+    r0 = np.array([R*np.cos(phi), R*np.sin(phi), np.zeros(len(t))])
+    r0 = np.einsum('ji',r0)
+    return r0
+
+
+def detector_tensor_taijia(t):
+    '''
+    Return detector tensor of taiji_a in ecliptic frame.
+    '''
+    n1 = arm_direction_taiji(1, t)
+    n2 = arm_direction_taiji(2, t)
+    n3 = arm_direction_taiji(3, t)
+    return 1/6*(np.einsum('ai,aj->aij',n1,n1)-2*np.einsum('ai,aj->aij',n2,n2)+np.einsum('ai,aj->aij',n3,n3))
+
+
+def detector_tensor_taijie(t):
+    '''
+    Return detector tensor of taiji_e in ecliptic frame.
+    '''
+    n1 = arm_direction_taiji(1, t)
+    n3 = arm_direction_taiji(3, t)
+    return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
+
+
+def detector_tensor_taiji(name, t):
+    if name.startswith('taiji_a'):
+        return detector_tensor_taijia(t)
+    elif name.startswith('taiji_e'):
+        return detector_tensor_taijie(t)
+    else:
+        raise Exception("Name 'taiji_a_xxx' or 'taiji_e_xxx' supposed.")
+
+
+def taiji_time_difference_to_sun_center(theta, phi, t):
+    '''
+    reference: arXiv:1803.03368v1
+    '''
+    c = 299792458
+    Omega = - np.array([np.sin(theta) * np.cos(phi),
+                        np.sin(theta) * np.sin(phi),
+                        np.cos(theta)])
+    r0 = orbit_taijicenter(t) / c  # r0 / c
+    return np.einsum('j,ij->i', Omega, r0)
+
+
+def get_taiji_fresponse(name, waveform, theta, phi, psi, t):
+    '''
+    Get TaiJi's response in frequency domain
+
+    Input:
+        name: str, detector name('taiji_a_xxx' or 'taiji_e_xxx' supposed)
+        waveform: dict, polarizations of waveform
+        theta, phi, psi: source location in ecliptic frame
+        t: time array corresponding of frequency array
+    '''
+    
+    D = detector_tensor_taiji(name, t)
+    signal = {}
+    for mode in ['plus', 'cross']:
+        polarization_tensor = polarization_tensor_ecliptic(theta, phi, psi, mode)
+        F = np.einsum('aij,ij->a', D, polarization_tensor)
+        signal[mode] = waveform[mode] * F
+    return sum(signal.values())
