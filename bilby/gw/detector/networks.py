@@ -34,7 +34,7 @@ class InterferometerList(list):
         for ifo in interferometers:
             if type(ifo) == str:
                 ifo = get_empty_interferometer(ifo)
-            if type(ifo) not in [Interferometer, TriangularInterferometer]:
+            if not (isinstance(ifo, Interferometer) or isinstance(ifo, TriangularInterferometer)):
                 raise TypeError("Input list of interferometers are not all Interferometer objects")
             else:
                 self.append(ifo)
