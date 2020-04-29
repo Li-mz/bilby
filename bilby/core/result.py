@@ -1325,7 +1325,7 @@ class Result(object):
     
     def convert_result_mass(self):
         reversed_mass = self.posterior.mass_1 < self.posterior.mass_2
-        self.posterior.loc[reversed_mass, 'mass_1'], self.posterior[reversed_mass, 'mass_2'] = \
+        self.posterior.loc[reversed_mass, 'mass_1'], self.posterior.loc[reversed_mass, 'mass_2'] = \
             self.posterior.loc[reversed_mass, 'mass_2'], self.posterior.loc[reversed_mass, 'mass_1']
 
 
