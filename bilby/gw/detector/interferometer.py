@@ -339,34 +339,29 @@ class Interferometer(object):
             psi = parameters['psi']
             tc = parameters['geocent_time']
 
-            mode = get_mode_from_name(self.name)
-            t = tf_spa_from_mode(self.frequency_array, tc, m1, m2, mode)
-            if 'A' not in parameters:
-                parameters['A'] = 0
-            waveform_polarizations = PV_generator_from_mode([mode]).frequency_domain_strain(parameters)
-            
-            if 'lisa' in self.name:
-                signal_ifo = get_lisa_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
-            elif 'tianqin' in self.name:
-                signal_ifo = get_tianqin_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
-            elif 'taiji' in self.name:
-                signal_ifo = get_taiji_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
-            
-            signal_ifo *= self.strain_data.frequency_mask
+            mode_array = get_mode_array_from_name(self.name)
+            signal_mode = []
+            for mode in mode_array:
+                waveform = PV_generator_from_mode([mode]).frequency_domain_strain(parameters=parameters)
+                t = tf_spa_from_mode(self.frequency_array, tc, m1, m2, mode)
+                if 'lisa' in self.name:
+                    signal = get_lisa_fresponse(self.name, waveform, theta, phi, psi, t)
+                    dt = lisa_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
+                elif 'tianqin' in self.name:
+                    signal = get_tianqin_fresponse(self.name, waveform, theta, phi, psi, t)
+                    dt = tianqin_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
+                elif 'taiji' in self.name:
+                    signal = get_taiji_fresponse(self.name, waveform, theta, phi, psi, t)
+                    dt = taiji_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
+                
+                signal *= self.strain_data.frequency_mask
 
-            if 'lisa' in self.name:
-                dt = lisa_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
-            elif 'tianqin' in self.name:
-                dt = tianqin_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
-            elif 'taiji' in self.name:
-                dt = taiji_time_difference_to_sun_center(theta, phi, t)[self.strain_data.frequency_mask]
-            
-            dt_geocent = parameters['geocent_time'] - self.strain_data.start_time  # not really "geo"cent
-            dt += dt_geocent
-            signal_ifo[self.strain_data.frequency_mask] = signal_ifo[self.strain_data.frequency_mask] * np.exp(
-                -1j * 2 * np.pi * dt * self.strain_data.frequency_array[self.strain_data.frequency_mask])
-            
-        return signal_ifo
+                dt_geocent = parameters['geocent_time'] - self.strain_data.start_time  # not really "geo"cent
+                dt += dt_geocent
+                signal[self.strain_data.frequency_mask] = signal[self.strain_data.frequency_mask] * np.exp(
+                    -1j* 2*np.pi*dt*self.strain_data.frequency_array[self.strain_data.frequency_mask])
+                signal_mode.append(signal)
+            return sum(signal_mode)
 
     def inject_signal(self, parameters, injection_polarizations=None,
                       waveform_generator=None):

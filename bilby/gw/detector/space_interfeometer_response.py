@@ -129,36 +129,32 @@ def tf_spa_from_mode(f, tc, m1, m2, mode):
     return tf_spa(f / m, tc, m1, m2)
 
 
-def get_mode_from_name(name):
+def get_mode_array_from_name(name):
     try:
         mode = [int(i) for i in name.split('_')[-1]]
-        if len(mode) != 2:
+        if len(mode) % 2:
             raise Exception
-        return mode
+        else:
+            mode_array = []
+            for i in range(0, len(mode), 2):
+                l, m = mode[i], mode[i + 1]
+                if m > l:
+                    raise Exception
+                mode_array.append([l, m])
+        return mode_array
     except:
-        return [2, 2]
+        return [[2, 2]]
 
 # %%
 # Polarization tensor in ecliptic frame
 
-def polarization_tensor_ecliptic(theta,phi,psi,polarization):
+def polarization_tensor_ecliptic(theta, phi, psi, polarization):
     '''
     Return the polarization tensor e_ij of GW in ecliptic frame
     polarizarion should be 'plus' or 'cross'
 
     Reference: 
     Liang, arXiv:1901.09624v3
-    '''
-    '''
-    m = np.array([\
-    np.cos(theta)*np.cos(phi)*np.cos(psi)+np.sin(phi)*np.sin(psi),\
-    np.cos(theta)*np.sin(phi)*np.cos(psi)-np.cos(phi)*np.sin(psi),\
-    -np.sin(theta)*np.cos(psi)])
-
-    n = np.array([\
-    -np.cos(theta)*np.cos(phi)*np.sin(psi)+np.sin(phi)*np.cos(psi),\
-    -np.cos(theta)*np.sin(phi)*np.sin(psi)-np.cos(phi)*np.cos(psi),\
-    np.sin(theta)*np.sin(psi)])
     '''
     p = np.array([np.cos(theta) * np.cos(phi),
                   np.cos(theta) * np.sin(phi),
@@ -248,93 +244,17 @@ def orbit_lisa(n,t):
         raise Exception('Wrong detector index')
 
 
-def detector_tensor_lisa1(t):
-    '''
-    Return detector tensor of LISA in ecliptic frame.
-    Definition of detector tensor is D_ij = 1/2*(uiuj-vivj)
-    LISA has two strain output, this function gives the first one.
-
-    Reference: 
-    Liang, arXiv:1901.09624v3
-    '''
-    u = arm_direction_lisa(1,t)
-    v = arm_direction_lisa(2,t)
-    return 0.5*(np.einsum('ai,aj->aij',u,u)-np.einsum('ai,aj->aij',v,v))
-
-
-def detector_tensor_lisa2(t):
-    '''
-    Return detector tensor of LISA in ecliptic frame.
-    Definition of detector tensor is D_ij = 1/2*(uiuj-vivj)
-    LISA has two strain output, this function gives the second one.
-    
-    Reference: 
-    Liang, arXiv:1901.09624v3
-    '''
-    u = (-1.0)*arm_direction_lisa(1,t)
-    v = arm_direction_lisa(3,t)
-    return 0.5*(np.einsum('ai,aj->aij',u,u)-np.einsum('ai,aj->aij',v,v))
-
-
-def detector_tensor_lisaa(t):
-    '''
-    Return detector tensor of LISA in ecliptic frame.
-    Definition of detector tensor is D_ij = 1/2*(uiuj-vivj)
-    LISA has two strain output, this function gives the lisa a.
-
-    Reference: 
-    
-    '''
-    n1 = arm_direction_lisa(1,t)
-    n2 = arm_direction_lisa(2,t)
-    n3 = arm_direction_lisa(3,t)
-    return 1/6*(np.einsum('ai,aj->aij',n1,n1)-2*np.einsum('ai,aj->aij',n2,n2)+np.einsum('ai,aj->aij',n3,n3))
-
-
-def detector_tensor_lisae(t):
-    '''
-    Return detector tensor of LISA in ecliptic frame.
-    Definition of detector tensor is D_ij = 1/2*(uiuj-vivj)
-    LISA has two strain output, this function gives the lisa e.
-
-    Reference: 
-    
-    '''
-    n1 = arm_direction_lisa(1,t)
-    #n2 = arm_direction_lisa(2,t)
-    n3 = arm_direction_lisa(3,t)
-    return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
-
-
 def detector_tensor_lisa(name, t):
-    '''
-    if name == 'lisa1':
-        return detector_tensor_lisa1(t)
-    elif name == 'lisa2':
-        return detector_tensor_lisa2(t)
-    elif name == 'lisaa':
-        return detector_tensor_lisaa(t)
-    elif name == 'lisae':
-        return detector_tensor_lisae(t)
-    '''
-    if name.startswith('lisa_a'):
-        return detector_tensor_lisaa(t)
-    elif name.startswith('lisa_e'):
-        return detector_tensor_lisae(t)
+    n1 = arm_direction_lisa(1, t)
+    n2 = arm_direction_lisa(2, t)
+    n3 = arm_direction_lisa(3, t)
+
+    if name.lower().startswith('lisa_a'):
+        return 1 / 6 * (np.einsum('ai,aj->aij', n1, n1) - 2 * np.einsum('ai,aj->aij', n2, n2) + np.einsum('ai,aj->aij', n3, n3))
+    elif name.lower().startswith('lisa_e'):
+        return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
     else:
         raise Exception("Name 'lisa_a_xxx' or 'lisa_e_xxx' supposed.")
-
-
-def lisa_time_difference_to_sun(theta, phi, t, n):
-    '''
-    reference: arXiv:1803.03368v1
-    '''
-    c = 299792458
-    Omega = - np.array([np.sin(theta) * np.cos(phi),
-                        np.sin(theta) * np.sin(phi),
-                        np.cos(theta)])
-    rnc = orbit_lisa(n, t) / c  # rn / c
-    return np.einsum('j,ij->i', Omega, rnc)
 
 
 def lisa_time_difference_to_sun_center(theta, phi, t):
@@ -353,9 +273,9 @@ def get_lisa_fresponse(name, waveform, theta, phi, psi, t):
     '''
     Get LISA's response in freq domain
 
+    f: frequency array
     t: time(s), should be converted from freq series by tf_spa
-    hp,hc: waveform in source frame (f domain)
-    theta,phi,psi: source location in ecliptic frame
+    theta, phi, psi: source location in ecliptic frame
 
     Note that this function can be also used to calculate time domain response, as long as hp&hc are given in time domain with cooresponding timeseries t.
     '''
@@ -467,7 +387,7 @@ def detector_tensor_tianqin(name, t):
     n2 = arm_direction_tianqin(2, t)
     n3 = arm_direction_tianqin(3, t)
 
-    if name.startswith('tianqin_a'):
+    if name.lower().startswith('tianqin_a'):
         return 1 / 6 * (np.einsum('ai,aj->aij', n1, n1) - 2 * np.einsum('ai,aj->aij', n2, n2) + np.einsum('ai,aj->aij', n3, n3))
     elif name.startswith('tianqin_e'):
         return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
@@ -522,30 +442,15 @@ def orbit_taijicenter(t):
     return r0
 
 
-def detector_tensor_taijia(t):
-    '''
-    Return detector tensor of taiji_a in ecliptic frame.
-    '''
+def detector_tensor_taiji(name, t):
     n1 = arm_direction_taiji(1, t)
     n2 = arm_direction_taiji(2, t)
     n3 = arm_direction_taiji(3, t)
-    return 1/6*(np.einsum('ai,aj->aij',n1,n1)-2*np.einsum('ai,aj->aij',n2,n2)+np.einsum('ai,aj->aij',n3,n3))
 
-
-def detector_tensor_taijie(t):
-    '''
-    Return detector tensor of taiji_e in ecliptic frame.
-    '''
-    n1 = arm_direction_taiji(1, t)
-    n3 = arm_direction_taiji(3, t)
-    return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
-
-
-def detector_tensor_taiji(name, t):
-    if name.startswith('taiji_a'):
-        return detector_tensor_taijia(t)
-    elif name.startswith('taiji_e'):
-        return detector_tensor_taijie(t)
+    if name.lower().startswith('taiji_a'):
+        return 1 / 6 * (np.einsum('ai,aj->aij', n1, n1) - 2 * np.einsum('ai,aj->aij', n2, n2) + np.einsum('ai,aj->aij', n3, n3))
+    elif name.lower().startswith('taiji_e'):
+        return np.sqrt(3) / 6 * (np.einsum('ai,aj->aij', n1, n1) - np.einsum('ai,aj->aij', n3, n3))
     else:
         raise Exception("Name 'taiji_a_xxx' or 'taiji_e_xxx' supposed.")
 

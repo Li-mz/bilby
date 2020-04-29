@@ -110,98 +110,41 @@ def PV_generator_from_mode(mode_array):
         parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters)
 
 
-def lisa_interferometer_from_mode(mode_array, injection_parameters):
-    L_lisa = 2.5e6
-
+def interferometer_from_mode(name, length, sn, mode_array):
     GR_generator = GR_generator_from_mode(mode_array)
-    GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
-    frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
+    frequencies = np.linspace(1e-4, 1e-2, len(GR_generator.frequency_array))
+    psd = sn(frequencies)
 
     mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
 
-    psd_lisa = sn_lisa(frequencies)
-    lisa_a = bilby.gw.detector.Interferometer(
+    interferometer_a = bilby.gw.detector.Interferometer(
         power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_lisa),
-        name='lisa_a_' + mode_str, length=L_lisa,
+            frequency_array=frequencies, psd_array=psd),
+        name=name + '_a_' + mode_str, length=length,
         minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
         latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=2., yarm_azimuth=125.)
 
-    lisa_e = bilby.gw.detector.Interferometer(
+    interferometer_e = bilby.gw.detector.Interferometer(
         power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_lisa),
-        name='lisa_e_' + mode_str, length=L_lisa,
+            frequency_array=frequencies, psd_array=psd),
+        name=name + '_e_' + mode_str + mode_str, length=length,
         minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
         latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=0, yarm_azimuth=60)
-    return lisa_a, lisa_e
-
-
-def tianqin_interferometer_from_mode(mode_array, injection_parameters):
-    L_tianqin = 1.7e5
-
-    GR_generator = GR_generator_from_mode(mode_array)
-    GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
-    frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
-
-    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
-
-    psd_tianqin = sn_tianqin(frequencies)
-    tianqin_a = bilby.gw.detector.Interferometer(
-        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_tianqin),
-        name='tianqin_a_' + mode_str, length=L_tianqin,
-        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
-        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=2., yarm_azimuth=125.)
-
-    tianqin_e = bilby.gw.detector.Interferometer(
-        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_tianqin),
-        name='tianqin_e_' + mode_str, length=L_tianqin,
-        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
-        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=0, yarm_azimuth=60)
-    return tianqin_a, tianqin_e
-
-
-def taiji_interferometer_from_mode(mode_array, injection_parameters):
-    L_taiji = 3e9
-
-    GR_generator = GR_generator_from_mode(mode_array)
-    GR_waveform = GR_generator.frequency_domain_strain(parameters=injection_parameters)
-    frequencies = np.linspace(1e-4, 1e-2, len(GR_waveform['plus']))
-
-    mode_str = ''.join([''.join([str(i) for i in mode]) for mode in mode_array])
-
-    psd_taiji = sn_taiji(frequencies)
-    taiji_a = bilby.gw.detector.Interferometer(
-        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_taiji),
-        name='taiji_a_' + mode_str, length=L_taiji,
-        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
-        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=2., yarm_azimuth=125.)
-
-    taiji_e = bilby.gw.detector.Interferometer(
-        power_spectral_density=bilby.gw.detector.PowerSpectralDensity(
-            frequency_array=frequencies, psd_array=psd_taiji),
-        name='taiji_e_' + mode_str, length=L_taiji,
-        minimum_frequency=min(frequencies), maximum_frequency=max(frequencies),
-        latitude=-31.34, longitude=115.91, elevation=0., xarm_azimuth=0, yarm_azimuth=60)
-    return taiji_a, taiji_e
+    return interferometer_a, interferometer_e
 
 # %%
-modes=[[[2, 2]]
-       [[2, 1]],
-       [[3, 3]],
-       [[4, 4]],
-       [[5, 5]]]
+mode_array = [[2, 2], [2, 1], [3, 3], [4, 4], [5, 5]]
+lisa_a, lisa_e = interferometer_from_mode('lisa', 2.5e6, sn_lisa, mode_array)
+taiji_a, taiji_e = interferometer_from_mode('taiji', 3e6, sn_taiji, mode_array)
+tianqin_a, tianqin_e = interferometer_from_mode('tianqin', 1.7e5, sn_tianqin, mode_array)
 
-ifos = bilby.gw.detector.InterferometerList([])
-for mode in modes:
-    lisaa, lisae = lisa_interferometer_from_mode(mode, injection_parameters)
-    taiji_a, taiji_e = taiji_interferometer_from_mode(mode, injection_parameters)
-    ifos.append(lisaa)
-    ifos.append(lisae)
-    ifos.append(taiji_a)
-    ifos.append(taiji_e)
+ifos=bilby.gw.detector.InterferometerList([])
+ifos.append(lisa_a)
+ifos.append(lisa_e)
+ifos.append(taiji_a)
+ifos.append(taiji_e)
+ifos.append(tianqin_a)
+ifos.append(tianqin_e)
 
 ifos.set_strain_data_from_power_spectral_densities(
     sampling_frequency=sampling_frequency, duration=duration,
