@@ -19,7 +19,6 @@ except ImportError:
     logger.warning("You do not have gwpy installed currently. You will "
                    " not be able to use some of the prebuilt functions.")
 
-from .space_interfeometer_response import *
 
 class Interferometer(object):
     """Class for the Interferometer """
