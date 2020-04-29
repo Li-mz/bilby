@@ -147,6 +147,74 @@ def get_polarization_tensor(ra, dec, time, psi, mode):
         raise ValueError("{} not a polarization mode!".format(mode))
 
 
+def get_polarization_tensor_ecliptic(theta, phi, psi, polarization):
+    '''
+    Return the polarization tensor e_ij of GW in ecliptic frame
+    polarizarion should be 'plus' or 'cross'
+
+    Reference: 
+    Liang, arXiv:1901.09624v3
+    '''
+    p = np.array([np.cos(theta) * np.cos(phi),
+                  np.cos(theta) * np.sin(phi),
+                  - np.sin(theta)])
+    q = np.array([np.sin(phi), -np.cos(phi), 0])
+    
+    ep = np.einsum('i,j', p, p) - np.einsum('i,j', q, q)
+    ec = np.einsum('i,j', p, q) + np.einsum('i,j', q, p)
+
+    if polarization == 'plus':
+        return ep * np.cos(2 * psi) - ec * np.sin(2 * psi)
+    elif polarization == 'cross':
+        return ep * np.sin(2 * psi) + ec * np.cos(2 * psi)
+    else:
+        raise ValueError("Polarization should be 'plus' or 'cross'")
+
+
+def tf_spa(f, tc, m1, m2):
+    '''
+    h(t) = F_+(t)*h_+(t) + F_x(t)*h_x(t)
+    Fourier Transfrom, we get
+    h(f) = F_+(f)*h_+(f) + F_x(f)*h_x(f)
+    However, antenna response in f domain F(f) is hard to obtain, so we use stationary phase approximation(SPA), changing F(f) into F(t(f)) which is a function in time domain.
+
+    This is the function calculating the t(f).
+
+    unit: f-Hz, tc-s, m1m2-solar mass
+
+    See (A12) in Niu, arXiv:1910.10592
+    '''
+    m1 = m1*2e30
+    m2 = m2*2e30
+    M = m1+m2
+    eta = m1*m2/M**2
+    M_c = eta**0.6*M
+    G = 6.67e-11
+    c = 299792458
+    pi = np.pi
+    v = (G*M*2*pi*f/c**3)**(1/3)
+    v = v.astype('float64')
+    t =  tc - c**(5)*5/256*(G*M_c)**(-5/3)*(2*pi*f)**(-8/3)*(1*v**(0)
+        +4/3*(743/336+(11/4)*eta)*v**(2)
+        +(-32*pi/5)*v**(3)
+        +(3058673/508032+5429/504*eta+617/72*eta**2)*v**(4)
+        +(-7729/252+13/3*eta)*pi*v**(5) 
+        +(-10052469856691/23471078400+128/3*pi**2+6848/105*0.577+3424/105*np.log(16*v**2)+(3147553127/3048192-451/12*pi**2)*eta-15211/1728*eta**2+25565/1296*eta**3)*v**(6)
+        +(-15419335/127008-75703/756*eta+14809/378*eta**2)*pi*v**(7))
+
+    t = t.astype('float64')
+
+    return t
+
+
+def tf_spa_from_mode(f, tc, m1, m2, mode):
+    '''
+    See (4.8) in arXiv:2001.10914v1
+    '''
+    m = mode[1]
+    return tf_spa(f / m, tc, m1, m2)
+
+
 def get_vertex_position_geocentric(latitude, longitude, elevation):
     """
     Calculate the position of the IFO vertex in geocentric coordinates in meters.
