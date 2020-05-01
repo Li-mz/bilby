@@ -63,9 +63,9 @@ def earth_orbit(phase=0.):
     def orbit(t):
         R = 1.4959787e11  # 1AU
         e = 0.0167        # eccentricity of the geocenter orbit around the Sun
-        fm = 3.14e-8      # 1 / (1 sidereal year)
+        T = 31557600.0      # 1 sidereal year
         
-        alpha = 2 * np.pi * fm * t + phase * np.pi / 180
+        alpha = 2 * np.pi * t / T + phase * np.pi / 180
 
         # center of mass
         x = R * np.cos(alpha) + 0.5 * R * e * (np.cos(2 * alpha) - 3) - 1.5 * R * e**2 * np.cos(alpha) * (np.sin(alpha)** 2)
@@ -82,9 +82,9 @@ def earth_orbit_circular(phase=0.):
     '''
     def orbit(t):
         R = 1.4959787e11  # 1AU
-        fm = 3.14e-8      # 1 / (1 sidereal year)
+        T = 31557600.0    # 1 sidereal year
         
-        alpha = 2 * np.pi * fm * t + phase * np.pi / 180
+        alpha = 2 * np.pi * t / T + phase * np.pi / 180
 
         return np.array([R * np.cos(alpha),
                          R * np.sin(alpha),
@@ -93,7 +93,7 @@ def earth_orbit_circular(phase=0.):
     return orbit
 
 
-def LISAlike_arm_direction(i, t):
+def LISAlike_arm_direction(phase=0.):
     '''
     Returns arm_direction function of a LISA-like interferometer.
 
@@ -101,14 +101,16 @@ def LISAlike_arm_direction(i, t):
     Cutler, arXiv:gr-qc/9703068v1
     Liang, arXiv:1901.09624v3
     '''
-    T = 31536000.0  # seconds in a year
-    alpha_i = 2*np.pi*t/T - np.pi/12 - (i-1)*np.pi/3
-    phi = 2*np.pi*t/T
+    def arm_direction(i, t):
+        T = 31557600.0    # 1 sidereal year
+        alpha_i = 2 * np.pi * t / T - np.pi / 12 - (i - 1) * np.pi / 3 + phase * np.pi / 180
+        phi = 2 * np.pi * t / T
 
-    ex = np.cos(phi)*np.sin(alpha_i)/2 - np.sin(phi)*np.cos(alpha_i)
-    ey = np.sin(phi)*np.sin(alpha_i)/2 + np.cos(phi)*np.cos(alpha_i)
-    ez = np.sqrt(3)*np.sin(alpha_i)/2
-    return np.array([ex, ey, ez]).transpose()
+        ex = np.cos(phi) * np.sin(alpha_i) / 2 - np.sin(phi) * np.cos(alpha_i)
+        ey = np.sin(phi) * np.sin(alpha_i) / 2 + np.cos(phi) * np.cos(alpha_i)
+        ez = np.sqrt(3) * np.sin(alpha_i) / 2
+        return np.array([ex, ey, ez]).transpose()
+    return arm_direction
 
 
 def TianQinlike_arm_direction(theta_s, phi_s, fsc):
