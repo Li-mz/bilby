@@ -74,8 +74,8 @@ def PV_waveform_from_mode(mode_array):
 def PVam_waveform_from_mode(mode_array):
     def waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
                  spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, B, **kwargs):
-        return PV_waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
-                           spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, B, mode_array, **kwargs)
+        return PVam_waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
+                             spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, B, mode_array, **kwargs)
     
     return waveform
 
@@ -90,7 +90,7 @@ duration = 2**18
 sampling_frequency = 1/16.
 
 np.random.seed(567)
-outdir = 'TianQin_LISA'
+outdir = 'LISA_TianQin_Taiji_PV'
 label = 'PV'
 bilby.core.utils.setup_logger(outdir=outdir, label=label)
 
@@ -143,6 +143,7 @@ priors['phi'] = bilby.core.prior.Uniform(name='phi', minimum=0, maximum=2*np.pi,
 priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
 
 priors['luminosity_distance'] = bilby.core.prior.Uniform(minimum = 1e3, maximum = 1e5, name='luminosity_distance')
+
 priors['geocent_time'] = bilby.core.prior.Uniform(
     minimum=injection_parameters['geocent_time'] - 10,
     maximum=injection_parameters['geocent_time'] + 10,
@@ -151,12 +152,12 @@ priors['geocent_time'] = bilby.core.prior.Uniform(
 for key in ['spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y','spin2z']:
     priors[key] = bilby.core.prior.Uniform(minimum = -0.5, maximum = 0.5, name=key)    
 '''
-priors['A'] = bilby.core.prior.Uniform(minimum = -1e3, maximum = 1e3, name='A')
+priors['A'] = bilby.core.prior.Uniform(minimum=-1e3, maximum=1e3, name='A')
 
 #%%
 # 这里随便选个generator，对不同阶定义的探测器波形都不一样，因此算响应时需要自行计算波形
 likelihood = bilby.gw.likelihood.GravitationalWaveTransient(
-    interferometers = ifos, waveform_generator = PV_generator_from_mode([[2, 2]]), priors = priors)
+    interferometers=ifos, waveform_generator=PV_generator_from_mode([2, 2]), priors=priors)
 
 # %%
 sampler = 'pymultinest'
