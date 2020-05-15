@@ -4,6 +4,11 @@
 Bilby
 =====
 
+**Note**
+This branch adds support to space GW detectors and allows you treat them in the same way with the original Interferometer instances.
+contributors: `Mingzheng Li <https://github.com/Li-mz/>`_, `Qian Hu <https://github.com/MarinerQ/>`_
+-----
+
 A user-friendly Bayesian inference library.
 Fulfilling all your Bayesian dreams.
 
