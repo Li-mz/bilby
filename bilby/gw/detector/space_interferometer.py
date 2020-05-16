@@ -125,7 +125,7 @@ class SpaceInterferometerList(InterferometerList):
                  length, orbit, arm_direction, generator, mode_array):
         super(SpaceInterferometerList, self).__init__([])
         for channel in ['a', 'e']:
-            self.append(SpaceInterferometer('{}_{}'.format(name, channel), power_spectral_density, minimum_frequency, maximum_frequency,
+            self.append(SpaceInterferometer('_'.join([name, channel]), power_spectral_density, minimum_frequency, maximum_frequency,
                 length, orbit, arm_direction, channel, generator, mode_array))
 
 

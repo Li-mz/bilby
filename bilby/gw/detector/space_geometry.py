@@ -33,6 +33,8 @@ class SpaceInterferometerGeometry(object):
             self.detector_tensor = self.detector_tensor_a
         elif channel == 'e':
             self.detector_tensor = self.detector_tensor_e
+        else:
+            raise ValueError('channel is supposed to be \'a\' or \'e\'.')
 
     def __eq__(self, other):
         for attribute in ['length', 'channel']:
@@ -41,7 +43,7 @@ class SpaceInterferometerGeometry(object):
         return True
 
     def __repr__(self):
-        return self.__class__.__name__ + '(length={}m)'.format(float(self.length))
+        return self.__class__.__name__ + '(length={}km)'.format(float(self.length))
 
     def detector_tensor_a(self, t):
         n1 = self.unit_vector_along_arm(1, t)
