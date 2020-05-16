@@ -90,7 +90,7 @@ duration = 2**18
 sampling_frequency = 1/16.
 
 np.random.seed(567)
-outdir = 'LISA_TianQin_Taiji_PV'
+outdir = 'LISA_Taiji_TianQin_PV'
 label = 'PV'
 bilby.core.utils.setup_logger(outdir=outdir, label=label)
 
@@ -113,14 +113,14 @@ def PVam_generator_from_mode(mode):
 
 # %%
 mode_array = [[2, 2], [2, 1], [3, 3], [4, 4], [5, 5]]
-frequencies = np.linspace(1e-4, 1e-2, len(PV_generator_from_mode(mode_array).frequency_array))
+frequencies = np.linspace(1e-4, 1e-2, len(PV_generator_from_mode([2, 2]).frequency_array))
 lisa = bilby.gw.detector.get_space_interferometer('LISA', frequencies, PV_generator_from_mode, mode_array)
-tianqin = bilby.gw.detector.get_space_interferometer('TianQin', frequencies, PV_generator_from_mode, mode_array)
 taiji = bilby.gw.detector.get_space_interferometer('Taiji', frequencies, PV_generator_from_mode, mode_array)
+tianqin = bilby.gw.detector.get_space_interferometer('TianQin', frequencies, PV_generator_from_mode, mode_array)
 
 ifos = lisa
-ifos.extend(tianqin)
 ifos.extend(taiji)
+ifos.extend(tianqin)
 
 ifos.set_strain_data_from_power_spectral_densities(
     sampling_frequency=sampling_frequency, duration=duration,
@@ -138,9 +138,9 @@ priors['mass_2'] = bilby.core.prior.Uniform(minimum=1e5, maximum=1e7, name='mass
 
 priors['phase'] = bilby.core.prior.Uniform(name='phase', minimum=0, maximum=2*np.pi, boundary='periodic')
 priors['iota'] = bilby.core.prior.Sine(name='iota')
-priors['theta'] = bilby.core.prior.Uniform(name='theta', minimum=0, maximum=np.pi, boundary='periodic')
-priors['phi'] = bilby.core.prior.Uniform(name='phi', minimum=0, maximum=2*np.pi, boundary='periodic')
-priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
+priors['theta'] = bilby.core.prior.Uniform(name='theta', minimum=0, maximum=np.pi, boundary='periodic', latex_label=r'$\theta_e$')
+priors['phi'] = bilby.core.prior.Uniform(name='phi', minimum=0, maximum=2*np.pi, boundary='periodic', latex_label=r'$\phi_e$')
+priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic', latex_label=r'$\psi$')
 
 priors['luminosity_distance'] = bilby.core.prior.Uniform(minimum = 1e3, maximum = 1e5, name='luminosity_distance')
 
@@ -173,4 +173,4 @@ for para in no_sample_parameters:
     plot_parameters.pop(para)
 
 result.convert_result_mass()
-result.plot_corner(parameters = plot_parameters, quantities=[0.05, 0.95])
+result.plot_corner(parameters=plot_parameters, quantiles=[0.05, 0.95])
