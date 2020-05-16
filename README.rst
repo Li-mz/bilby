@@ -4,9 +4,9 @@
 Bilby
 =====
 
-| **Note**
-| This branch adds support to space GW detectors and allows you treat them in the same way with the original Interferometer instances.
-| contributors: `Mingzheng Li <https://github.com/Li-mz/>`_, `Qian Hu <https://github.com/MarinerQ/>`_
+| **Note:**
+| This branch adds support to space GW detectors and allows you treat them in the same way as the original Interferometer instances.
+| Contributors: `Mingzheng Li <https://github.com/Li-mz/>`_, `Qian Hu <https://github.com/MarinerQ/>`_
 
 -----
 
