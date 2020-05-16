@@ -294,7 +294,6 @@ class Interferometer(object):
         -------
         array_like: A 3x3 array representation of the detector response (signal observed in the interferometer)
         """
-        
         signal = {}
         for mode in waveform_polarizations.keys():
             det_response = self.antenna_response(
@@ -322,6 +321,8 @@ class Interferometer(object):
         signal_ifo[self.strain_data.frequency_mask] *= self.calibration_model.get_calibration_factor(
             self.strain_data.frequency_array[self.strain_data.frequency_mask],
             prefix='recalib_{}_'.format(self.name), **parameters)
+
+        return signal_ifo
 
     def inject_signal(self, parameters, injection_polarizations=None,
                       waveform_generator=None):
