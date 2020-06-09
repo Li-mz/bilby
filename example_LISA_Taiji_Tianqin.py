@@ -81,9 +81,8 @@ def PVam_waveform_from_mode(mode_array):
 
 # %%
 
-injection_parameters = dict(mass_1 = 5e6, mass_2 = 3e6, phase=1., iota=1.3, theta=1, phi=3, psi=np.pi/3,
+injection_parameters = dict(mass_1=5e6, mass_2=3e6, phase=1., iota=1.3, theta=1, phi=3, psi=np.pi/3,
                             luminosity_distance=20e3, geocent_time=1126259642.4,
-                            # spin1x=0.1, spin1y=0.12, spin1z=0.13, spin2x=0.1, spin2y=0.05, spin2z=0.07
                             spin1x=0., spin1y=0., spin1z=0., spin2x=0., spin2y=0., spin2z=0., A=0)
 
 duration = 2**18
@@ -116,7 +115,7 @@ mode_array = [[2, 2], [2, 1], [3, 3], [4, 4], [5, 5]]
 frequencies = np.linspace(1e-4, 1e-2, len(PV_generator_from_mode([2, 2]).frequency_array))
 lisa = bilby.gw.detector.get_space_interferometer('LISA', frequencies, PV_generator_from_mode, mode_array)
 taiji = bilby.gw.detector.get_space_interferometer('Taiji', frequencies, PV_generator_from_mode, mode_array)
-tianqin = bilby.gw.detector.get_space_interferometer('TianQin', frequencies, PV_generator_from_mode, mode_array)
+tianqin = bilby.gw.detector.get_space_interferometer('Tianqin', frequencies, PV_generator_from_mode, mode_array)
 
 ifos = lisa
 ifos.extend(taiji)
@@ -154,8 +153,8 @@ for key in ['spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y','spin2z']:
 '''
 priors['A'] = bilby.core.prior.Uniform(minimum=-1e3, maximum=1e3, name='A')
 
-#%%
-# 这里随便选个generator，对不同阶定义的探测器波形都不一样，因此算响应时需要自行计算波形
+# %%
+# waveform_generator here is not applied in calculating likelihood, because we only use parameters injected to calculate response.
 likelihood = bilby.gw.likelihood.GravitationalWaveTransient(
     interferometers=ifos, waveform_generator=PV_generator_from_mode([2, 2]), priors=priors)
 
@@ -164,7 +163,7 @@ sampler = 'pymultinest'
 
 result = bilby.run_sampler(
     likelihood=likelihood, priors=priors, sampler=sampler, npoints=1000,
-    injection_parameters=injection_parameters, outdir=outdir, label=label, resume=False)
+    injection_parameters=injection_parameters, outdir=outdir, label=label)
 
 # %%
 no_sample_parameters = ['spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y', 'spin2z']
