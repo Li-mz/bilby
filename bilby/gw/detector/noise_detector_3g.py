@@ -1,5 +1,5 @@
 '''
-Calculate PSD of 3rd-genertion GW detectors LISA, TianQin and ET.
+Calculate PSD of 3rd-genertion GW detectors LISA, TianQin, Taiji and ET.
 '''
 
 import numpy as np
@@ -71,18 +71,17 @@ def sn_et(f):
     return S0*(x**p1 + a1*x**p2 + a2*(1+b1*x+b2*x**2+b3*x**3+b4*x**4+b5*x**5+b6*x**6)/(1+c1*x+c2*x**2+c3*x**3+c4*x**4))
 
 # %% TianQin noise
-# reference: Niu, arXiv:1910.10592
+# Reference: arXiv:2002.06360
 def sn_tianqin(f):
     Sx = 1e-24
     L = 1.73e8
     fstar = 0.28
     Sa = 1e-30
 
-    A = Sx/L**2
-    B = 4*Sa/(2*np.pi*f)**4/L**2*(1+1e-4/f)
-    C = 1+(f/1.29/fstar)**2
+    S_N = Sx / L**2 + 4 * Sa / (2*np.pi*f)** 4 / L**2 * (1 + 1e-4/f)
+    R = 3 / 10 / (1 + 0.6 * (f / fstar)** 2)
 
-    return (A+B)*C
+    return S_N / R
 
 # %% Taiji noise
 # Reference: arXiv:2002.06360
