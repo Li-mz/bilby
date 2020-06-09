@@ -6,54 +6,6 @@ Calculate response for space detectors LISA, TianQin.
 import numpy as np
 import matplotlib.pyplot as plt
 
-# %% PV waveform
-from pycbc.waveform import get_fd_waveform
-from ..waveform_generator import WaveformGenerator
-from ..conversion import convert_to_lal_binary_black_hole_parameters
-
-approx = 'IMRPhenomXHM'
-
-def PV_waveform(farray, mass_1, mass_2,
-                phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
-                spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, A, mode_array, **kwargs):
-    flow = 1e-4
-    fhigh = farray[-1]
-    deltaf = farray[1] - farray[0]
-
-    waveform_polarizations = {}
-    hp, hc = \
-    get_fd_waveform(approximant=approx,
-        mass1=mass_1, mass2=mass_2,
-        distance=luminosity_distance,
-        inclination=iota, coa_phase=phase,
-        spin1x=spin1x, spin1y=spin1y, spin1z=spin1z,
-        spin2x=spin2x, spin2y=spin2y, spin2z=spin2z,
-        delta_f=deltaf, f_lower=flow, f_final=fhigh,
-        mode_array=mode_array)
-
-    dphi1 = A * (np.pi * farray)** 2
-    waveform_polarizations['plus'] = (hp + hc * dphi1).numpy()
-    waveform_polarizations['cross'] = (hc - hp * dphi1).numpy()
-    return waveform_polarizations
-
-
-def PV_waveform_from_mode(mode_array):
-    def waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
-                 spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, A, **kwargs):
-        return PV_waveform(farray, mass_1, mass_2, phase, iota, theta, phi, psi, luminosity_distance, geocent_time,
-                           spin1x, spin1y, spin1z, spin2x, spin2y, spin2z, A, mode_array, **kwargs)
-    
-    return waveform
-
-duration = 2**18
-sampling_frequency = 1/16.
-
-def PV_generator_from_mode(mode_array):
-    return WaveformGenerator(
-        duration=duration, sampling_frequency=sampling_frequency,
-        frequency_domain_source_model=PV_waveform_from_mode(mode_array),
-        parameter_conversion=convert_to_lal_binary_black_hole_parameters)
-
 # %%  Antenna pattern function in detector frame
 # References:
 # Cutler, https://arxiv.org/abs/gr-qc/9703068v1
@@ -119,24 +71,6 @@ def tf_spa(f, tc, m1, m2):
     t = t.astype('float64')
 
     return t
-
-
-def tf_spa_from_mode(f, tc, m1, m2, mode):
-    '''
-    See (4.8) in arXiv:2001.10914v1
-    '''
-    m = mode[1]
-    return tf_spa(f / m, tc, m1, m2)
-
-
-def get_mode_from_name(name):
-    try:
-        mode = [int(i) for i in name.split('_')[-1]]
-        if len(mode) != 2:
-            raise Exception
-        return mode
-    except:
-        return [2, 2]
 
 # %%
 # Polarization tensor in ecliptic frame

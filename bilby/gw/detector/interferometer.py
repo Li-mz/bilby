@@ -339,11 +339,7 @@ class Interferometer(object):
             psi = parameters['psi']
             tc = parameters['geocent_time']
 
-            mode = get_mode_from_name(self.name)
-            t = tf_spa_from_mode(self.frequency_array, tc, m1, m2, mode)
-            if 'A' not in parameters:
-                parameters['A'] = 0
-            waveform_polarizations = PV_generator_from_mode([mode]).frequency_domain_strain(parameters)
+            t = tf_spa(self.frequency_array, tc, m1, m2)
             
             if 'lisa' in self.name:
                 signal_ifo = get_lisa_fresponse(self.name, waveform_polarizations, theta, phi, psi, t)
