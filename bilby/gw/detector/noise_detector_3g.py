@@ -16,11 +16,6 @@ def sacc_lisa(f):
     C = (2.22e-5/f)**8
     return A*(1+B*(1+C))
 
-def sother_lisa(f):
-    '''
-    return other noise of LISA which is a const.
-    '''
-    return 8.899e-23
 
 def scon_lisa(f):
     '''
@@ -39,6 +34,7 @@ def scon_lisa(f):
 
     return 0.5*A*B*C*D
 
+
 def sn_lisa(f):
     '''
     return total PSD of LISA.
@@ -46,8 +42,7 @@ def sn_lisa(f):
     '''
     L = 2.5e9
     fstar = 0.019
-    return (4*sacc_lisa(f)+8.899e-23)/(L**2) * (1+(f/(1.29*fstar))**2) +scon_lisa(f)
-
+    return (4*sacc_lisa(f) + 8.899e-23) / L**2 * (1+(f/(1.29*fstar))**2) + scon_lisa(f)
 
 # %%  ET noise
 # reference: Zhao, arXiv:1009.0206
@@ -79,7 +74,7 @@ def sn_tianqin(f):
     Sa = 1e-30
 
     S_N = Sx / L**2 + 4 * Sa / (2*np.pi*f)** 4 / L**2 * (1 + 1e-4/f)
-    R = 3 / 10 / (1 + 0.6 * (f / fstar)** 2)
+    R = 1 / (1 + 0.6 * (f / fstar)** 2)
 
     return S_N / R
 
@@ -93,5 +88,5 @@ def sn_taiji(f):
     Sa = 9e-30
 
     S_N = Sx / L**2 + 4 * Sa / (2*np.pi*f)** 4 / L**2 * (1 + 1e-4/f)
-    R = 3 / 10 / (1 + 0.6 * (f / fstar)** 2)
+    R = 1 / (1 + 0.6 * (f / fstar)** 2)
     return S_N / R
