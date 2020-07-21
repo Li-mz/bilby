@@ -27,7 +27,7 @@ class SpaceInterferometerGeometry(object):
         self.length = length
         self.orbit = orbit
         self.unit_vector_along_arm = arm_direction
-        
+
         self.channel = channel
         if channel == 'a':
             self.detector_tensor = self.detector_tensor_a
@@ -66,12 +66,14 @@ def earth_orbit(phase=0.):
         R = 1.4959787e11  # 1AU
         e = 0.0167        # eccentricity of the geocenter orbit around the Sun
         T = 31557600.0      # 1 sidereal year
-        
+
         alpha = 2 * np.pi * t / T + phase * np.pi / 180
 
         # center of mass
-        x = R * np.cos(alpha) + 0.5 * R * e * (np.cos(2 * alpha) - 3) - 1.5 * R * e**2 * np.cos(alpha) * (np.sin(alpha)** 2)
-        y = R * np.sin(alpha) + 0.5 * R * e * np.sin(2 * alpha) + 0.25 * R * e**2 * (3 * np.cos(2 * alpha) - 1) * np.sin(alpha)
+        x = R * np.cos(alpha) + 0.5 * R * e * (np.cos(2 * alpha) - 3) - \
+            1.5 * R * e**2 * np.cos(alpha) * (np.sin(alpha) ** 2)
+        y = R * np.sin(alpha) + 0.5 * R * e * np.sin(2 * alpha) + 0.25 * \
+            R * e**2 * (3 * np.cos(2 * alpha) - 1) * np.sin(alpha)
         z = np.zeros(t.shape)
         return np.array([x, y, z]).transpose()
     return orbit
@@ -85,13 +87,13 @@ def earth_orbit_circular(phase=0.):
     def orbit(t):
         R = 1.4959787e11  # 1AU
         T = 31557600.0    # 1 sidereal year
-        
+
         alpha = 2 * np.pi * t / T + phase * np.pi / 180
 
         return np.array([R * np.cos(alpha),
                          R * np.sin(alpha),
                          np.zeros(t.shape)]).transpose()
-    
+
     return orbit
 
 
@@ -128,7 +130,8 @@ def TianQinlike_arm_direction(theta_s, phi_s, fsc):
     def arm_direction(i, t):
         thetas = theta_s * np.pi / 180
         phis = phi_s * np.pi / 180
-        alpha_i = 2*np.pi*fsc*t + 2/3*np.pi*i - np.pi/3  # calculated by substracting coordinates of each spacecraft and normalizing 
+        # calculated by substracting coordinates of each spacecraft and normalizing
+        alpha_i = 2 * np.pi * fsc * t + 2 / 3 * np.pi * i - np.pi / 3
 
         x = np.cos(phis) * np.sin(thetas) * np.cos(alpha_i) - np.sin(alpha_i) * np.sin(phis)
         y = np.sin(phis) * np.sin(thetas) * np.cos(alpha_i) + np.sin(alpha_i) * np.cos(phis)

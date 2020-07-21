@@ -12,6 +12,7 @@ from .networks import InterferometerList
 
 from typing import Callable, List
 
+
 class SpaceInterferometer(Interferometer):
     """Class for Space Interferometer """
     length = PropertyAccessor('geometry', 'length')
@@ -56,7 +57,7 @@ class SpaceInterferometer(Interferometer):
                 self.strain_data == other.strain_data:
             return True
         return False
-    
+
     def __repr__(self):
         return self.__class__.__name__ + '(name=\'{}\')'.format(self.name)
 
@@ -120,13 +121,14 @@ class SpaceInterferometer(Interferometer):
         r0 = self.geometry.orbit(t) / c
         return np.einsum('j,ij->i', Omega, r0)
 
+
 class SpaceInterferometerList(InterferometerList):
     def __init__(self, name, power_spectral_density, minimum_frequency, maximum_frequency,
                  length, orbit, arm_direction, generator, mode_array):
         super(SpaceInterferometerList, self).__init__([])
         for channel in ['a', 'e']:
             self.append(SpaceInterferometer('_'.join([name, channel]), power_spectral_density, minimum_frequency, maximum_frequency,
-                length, orbit, arm_direction, channel, generator, mode_array))
+                                            length, orbit, arm_direction, channel, generator, mode_array))
 
 
 def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
@@ -143,7 +145,7 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
             'length': 1.7e5,
             'psd': sn_tianqin,
             'orbit': earth_orbit(0),
-            'arm_direction': TianQinlike_arm_direction(-4.7, 120.5, 1/315360)
+            'arm_direction': TianQinlike_arm_direction(-4.7, 120.5, 1 / 315360)
         },
         'taiji': {
             'length': 3e6,
@@ -162,4 +164,3 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
             generator=generator, mode_array=mode_array)
     else:
         raise ValueError("can only provide these interferometers: " + ','.join(ifo_config.keys()))
-
