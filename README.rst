@@ -4,6 +4,13 @@
 Bilby
 =====
 
+| **Note:**
+| This branch adds support to space GW detectors and allows you treat them in the same way as the original Interferometer instances.
+| This version considers different t(f) (SPA approximation) for different GW harmonic mode, but takes long time to run. You can see the version which doesn't consider different t(f) for different modes in `this branch <https://github.com/Li-mz/bilby/tree/SpaceResponse/>`_.
+| Contributors: `Mingzheng Li <https://github.com/Li-mz/>`_, `Qian Hu <https://github.com/MarinerQ/>`_
+
+-----
+
 A user-friendly Bayesian inference library.
 Fulfilling all your Bayesian dreams.
 

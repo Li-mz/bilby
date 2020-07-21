@@ -15,3 +15,5 @@ MANIFEST
 *.ipynb_checkpoints
 outdir/*
 .idea/*
+
+.vscode/

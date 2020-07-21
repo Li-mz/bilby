@@ -1483,6 +1483,11 @@ class Result(object):
             weights.append(weight)
 
         return weights
+    
+    def convert_result_mass(self):
+        reversed_mass = self.posterior.mass_1 < self.posterior.mass_2
+        self.posterior.loc[reversed_mass, 'mass_1'], self.posterior.loc[reversed_mass, 'mass_2'] = \
+            self.posterior.loc[reversed_mass, 'mass_2'], self.posterior.loc[reversed_mass, 'mass_1']
 
     def to_arviz(self, prior=None):
         """ Convert the Result object to an ArviZ InferenceData object.

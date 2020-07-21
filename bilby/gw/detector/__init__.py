@@ -4,6 +4,7 @@ from .interferometer import *
 from .networks import *
 from .psd import *
 from .strain_data import *
+from .space_interferometer import *
 
 try:
     import lal
