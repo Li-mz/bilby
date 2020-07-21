@@ -75,8 +75,8 @@ def scon_tianqin(f):
     '''
     i = range(7)
     a = [-18.73, -1.146, -1.0950, 2.0970, -4.931, 7.147, -4.651]
-    x = np.log(f / 1e-3)
-    return sum([10**(ai * x**ii) for ai, ii in zip(a, i)])
+    x = np.log10(f / 1e-3)
+    return 10**(2 * sum([ai * x**ii for ai, ii in zip(a, i)]))
 
 
 def sn_tianqin(f):
