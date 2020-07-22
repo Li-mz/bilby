@@ -17,7 +17,8 @@ class WaveformGenerator(object):
     def __init__(self, duration=None, sampling_frequency=None, start_time=0, frequency_domain_source_model=None,
                  time_domain_source_model=None, parameters=None,
                  parameter_conversion=None,
-                 waveform_arguments=None):
+                 waveform_arguments=None,
+                 init_log=True):
         """ A waveform generator
 
     Parameters
@@ -68,15 +69,16 @@ class WaveformGenerator(object):
         if isinstance(parameters, dict):
             self.parameters = parameters
         self._cache = dict(parameters=None, waveform=None, model=None)
-        utils.logger.info(
-            "Waveform generator initiated with\n"
-            "  frequency_domain_source_model: {}\n"
-            "  time_domain_source_model: {}\n"
-            "  parameter_conversion: {}"
-            .format(utils.get_function_path(self.frequency_domain_source_model),
-                    utils.get_function_path(self.time_domain_source_model),
-                    utils.get_function_path(self.parameter_conversion))
-        )
+        if init_log:
+            utils.logger.info(
+                "Waveform generator initiated with\n"
+                "  frequency_domain_source_model: {}\n"
+                "  time_domain_source_model: {}\n"
+                "  parameter_conversion: {}"
+                .format(utils.get_function_path(self.frequency_domain_source_model),
+                        utils.get_function_path(self.time_domain_source_model),
+                        utils.get_function_path(self.parameter_conversion))
+            )
 
     def __repr__(self):
         if self.frequency_domain_source_model is not None:
