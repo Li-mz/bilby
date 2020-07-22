@@ -755,7 +755,7 @@ class GravitationalWaveTransient(Likelihood):
 
     @reference_frame.setter
     def reference_frame(self, frame):
-        if frame == "sky":
+        if frame == "sky" or frame == 'ecliptic':
             self._reference_frame = frame
         elif isinstance(frame, InterferometerList):
             self._reference_frame = frame[:2]
@@ -768,13 +768,19 @@ class GravitationalWaveTransient(Likelihood):
 
     def get_sky_frame_parameters(self):
         time = self.parameters['{}_time'.format(self.time_reference)]
-        if not self.reference_frame == "sky":
+        sky_frame_parameters = {}
+        if self.reference_frame == "sky":
+            sky_frame_parameters["ra"] = self.parameters["ra"]
+            sky_frame_parameters["dec"] = self.parameters["dec"]
+        elif self.reference_frame == "ecliptic":
+            sky_frame_parameters["theta"] = self.parameters["theta"]
+            sky_frame_parameters["phi"] = self.parameters["phi"]
+        else:
             ra, dec = zenith_azimuth_to_ra_dec(
                 self.parameters['zenith'], self.parameters['azimuth'],
                 time, self.reference_frame)
-        else:
-            ra = self.parameters["ra"]
-            dec = self.parameters["dec"]
+            sky_frame_parameters["ra"] = ra
+            sky_frame_parameters["dec"] = dec
         if "geocent" not in self.time_reference:
             geocent_time = (
                 time - self.reference_ifo.time_delay_from_geocenter(
@@ -783,7 +789,8 @@ class GravitationalWaveTransient(Likelihood):
             )
         else:
             geocent_time = self.parameters["geocent_time"]
-        return dict(ra=ra, dec=dec, geocent_time=geocent_time)
+        sky_frame_parameters["geocent_time"] = geocent_time
+        return sky_frame_parameters
 
     @property
     def lal_version(self):
