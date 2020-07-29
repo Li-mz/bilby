@@ -80,8 +80,6 @@ def PVam_waveform_from_mode(mode_array):
     return waveform
 
 # %%
-
-
 injection_parameters = dict(mass_1=5e6, mass_2=3e6, phase=1., iota=1.3, theta=1, phi=3, psi=np.pi / 3,
                             luminosity_distance=20e3, geocent_time=1126259642.4,
                             spin1x=0., spin1y=0., spin1z=0., spin2x=0., spin2y=0., spin2z=0., A=0)
@@ -97,8 +95,6 @@ bilby.core.utils.setup_logger(outdir=outdir, label=label)
 waveform_arguments = dict(minimum_frequency=1e-4)
 
 # %%
-
-
 def PV_generator_from_mode(mode):
     return bilby.gw.waveform_generator.WaveformGenerator(
         duration=duration, sampling_frequency=sampling_frequency,
@@ -162,7 +158,7 @@ priors['A'] = bilby.core.prior.Uniform(minimum=-1e3, maximum=1e3, name='A')
 # %%
 # waveform_generator here is not applied in calculating likelihood, because we only use parameters injected to calculate response.
 likelihood = bilby.gw.likelihood.GravitationalWaveTransient(
-    interferometers=ifos, waveform_generator=PV_generator_from_mode([2, 2]), priors=priors)
+    interferometers=ifos, waveform_generator=PV_generator_from_mode([2, 2]), priors=priors, reference_frame='ecliptic')
 
 # %%
 sampler = 'pymultinest'
@@ -171,11 +167,5 @@ result = bilby.run_sampler(
     likelihood=likelihood, priors=priors, sampler=sampler, npoints=1000,
     injection_parameters=injection_parameters, outdir=outdir, label=label)
 
-# %%
-no_sample_parameters = ['spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y', 'spin2z']
-plot_parameters = injection_parameters.copy()
-for para in no_sample_parameters:
-    plot_parameters.pop(para)
-
 result.convert_result_mass()
-result.plot_corner(parameters=plot_parameters, quantiles=[0.05, 0.95])
+result.plot_corner(quantiles=[0.05, 0.95])
