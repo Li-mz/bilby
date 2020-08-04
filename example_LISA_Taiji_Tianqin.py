@@ -87,7 +87,7 @@ injection_parameters = dict(mass_1=5e6, mass_2=3e6, phase=1., iota=1.3, theta=1,
 duration = 2**18
 sampling_frequency = 1 / 16
 
-np.random.seed(567)
+np.random.seed(0)
 outdir = 'LISA_Taiji_TianQin_PV'
 label = 'PV'
 bilby.core.utils.setup_logger(outdir=outdir, label=label)
@@ -99,14 +99,16 @@ def PV_generator_from_mode(mode):
     return bilby.gw.waveform_generator.WaveformGenerator(
         duration=duration, sampling_frequency=sampling_frequency,
         frequency_domain_source_model=PV_waveform_from_mode([mode]),
-        parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters)
+        parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters,
+        init_log=False)
 
 
 def PVam_generator_from_mode(mode):
     return bilby.gw.waveform_generator.WaveformGenerator(
         duration=duration, sampling_frequency=sampling_frequency,
         frequency_domain_source_model=PVam_waveform_from_mode([mode]),
-        parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters)
+        parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters,
+        init_log=False)
 
 
 # %%
