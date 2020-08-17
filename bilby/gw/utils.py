@@ -159,7 +159,7 @@ def get_polarization_tensor_ecliptic(theta, phi, psi, polarization):
                   np.cos(theta) * np.sin(phi),
                   - np.sin(theta)])
     q = np.array([np.sin(phi), -np.cos(phi), 0])
-    
+
     ep = np.einsum('i,j', p, p) - np.einsum('i,j', q, q)
     ec = np.einsum('i,j', p, q) + np.einsum('i,j', q, p)
 
@@ -184,26 +184,30 @@ def tf_spa(f, tc, m1, m2):
 
     See (A12) in Niu, arXiv:1910.10592
     '''
-    m1 = m1*2e30
-    m2 = m2*2e30
-    M = m1+m2
-    eta = m1*m2/M**2
-    M_c = eta**0.6*M
     G = 6.67e-11
     c = 299792458
-    pi = np.pi
-    v = (G*M*2*pi*f/c**3)**(1/3)
+    gamma = 0.5772
+    m1 = m1 * 2e30
+    m2 = m2 * 2e30
+    M = m1 + m2
+    eta = m1 * m2 / M**2
+    M_c = eta**0.6 * M
+    v = (G * M * np.pi * f / c**3)**(1 / 3)
     v = v.astype('float64')
-    t =  tc - c**(5)*5/256*(G*M_c)**(-5/3)*(2*pi*f)**(-8/3)*(1*v**(0)
-        +4/3*(743/336+(11/4)*eta)*v**(2)
-        +(-32*pi/5)*v**(3)
-        +(3058673/508032+5429/504*eta+617/72*eta**2)*v**(4)
-        +(-7729/252+13/3*eta)*pi*v**(5) 
-        +(-10052469856691/23471078400+128/3*pi**2+6848/105*0.577+3424/105*np.log(16*v**2)+(3147553127/3048192-451/12*pi**2)*eta-15211/1728*eta**2+25565/1296*eta**3)*v**(6)
-        +(-15419335/127008-75703/756*eta+14809/378*eta**2)*pi*v**(7))
 
+    tau = [1,
+           0,
+           743 / 252 + 11 / 3 * eta,
+           -32 / 5 * np.pi,
+           3058673 / 508032 + 5429 / 504 * eta + 617 / 72 * eta**2,
+           (-7729 / 252 + 13 / 3 * eta) * np.pi,
+           -10052469856691 / 23471078400 + 128 / 3 * np.pi**2 + 6848 / 105 * gamma + (3147553127 / 3048192 - 451 / 12 * np.pi**2) * eta -
+           15211 / 1728 * eta**2 + 25565 / 1296 * eta**3 + 3424 / 105 * np.log(16 * v**2),
+           (-15419335 / 127008 - 75703 / 756 * eta + 14809 / 378 * eta**2) * np.pi]
+
+    t = tc - 5 / 256 * (G * M_c)**(-5 / 3) * c**5 * (np.pi * f)**(-8 / 3) * \
+        sum([tau_i * v**i for i, tau_i in enumerate(tau)])
     t = t.astype('float64')
-
     return t
 
 
@@ -212,7 +216,7 @@ def tf_spa_from_mode(f, tc, m1, m2, mode):
     See (4.8) in arXiv:2001.10914v1
     '''
     m = mode[1]
-    return tf_spa(f / m, tc, m1, m2)
+    return tf_spa(2 * f / m, tc, m1, m2)
 
 
 def get_vertex_position_geocentric(latitude, longitude, elevation):
@@ -749,7 +753,6 @@ def gw_data_find(observatory, gps_start_time, duration, calibration,
 
 
 def build_roq_weights(data, basis, deltaF):
-
     """
     for a data array and reduced basis compute roq weights
     basis: (reduced basis element)*invV (the inverse Vandermonde matrix)
