@@ -45,6 +45,16 @@ class SpaceInterferometerGeometry(object):
     def __repr__(self):
         return self.__class__.__name__ + '(length={}km)'.format(float(self.length))
 
+    def spacecraft(self, t, i):
+        if i == 1:
+            return self.orbit(t) + self.length * 1e3 / 3 * (-self.unit_vector_along_arm(1, t) - self.unit_vector_along_arm(2, t))
+        elif i == 2:
+            return self.orbit(t) + self.length * 1e3 / 3 * (self.unit_vector_along_arm(1, t) - self.unit_vector_along_arm(3, t))
+        elif i == 3:
+            return self.orbit(t) + self.length * 1e3 / 3 * (self.unit_vector_along_arm(2, t) + self.unit_vector_along_arm(3, t))
+        else:
+            raise ValueError('i is supposed to be 1,2,3')
+
     def detector_tensor_a(self, t):
         n1 = self.unit_vector_along_arm(1, t)
         n2 = self.unit_vector_along_arm(2, t)
