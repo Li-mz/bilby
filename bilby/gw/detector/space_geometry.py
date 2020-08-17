@@ -131,10 +131,10 @@ def TianQinlike_arm_direction(theta_s, phi_s, fsc):
         thetas = theta_s * np.pi / 180
         phis = phi_s * np.pi / 180
         # calculated by substracting coordinates of each spacecraft and normalizing
-        alpha_i = 2 * np.pi * fsc * t + 2 / 3 * np.pi * i - np.pi / 3
+        alpha_i = 2 * np.pi * fsc * t + np.pi / 3 * i + np.pi / 2
 
-        x = np.cos(phis) * np.sin(thetas) * np.cos(alpha_i) - np.sin(alpha_i) * np.sin(phis)
-        y = np.sin(phis) * np.sin(thetas) * np.cos(alpha_i) + np.sin(alpha_i) * np.cos(phis)
-        z = -np.cos(alpha_i) * np.cos(theta_s)
+        x = np.cos(phis) * np.sin(thetas) * np.sin(alpha_i) + np.sin(phis) * np.cos(alpha_i)
+        y = np.sin(phis) * np.sin(thetas) * np.sin(alpha_i) - np.cos(phis) * np.cos(alpha_i)
+        z = -np.cos(theta_s) * np.sin(alpha_i)
         return np.array([x, y, z]).transpose()
     return arm_direction
