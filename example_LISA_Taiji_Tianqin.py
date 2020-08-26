@@ -1,13 +1,7 @@
 # %%
 import bilby
 import numpy as np
-import matplotlib.pyplot as plt
 
-import pycbc
-import pycbc.noise
-import pycbc.psd
-from pycbc.types import FrequencySeries
-from pycbc.waveform import get_td_waveform
 from pycbc.waveform import get_fd_waveform
 
 # %%
@@ -138,8 +132,7 @@ priors['mass_2'] = bilby.core.prior.Uniform(minimum=1e5, maximum=1e7, name='mass
 
 priors['phase'] = bilby.core.prior.Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
 priors['iota'] = bilby.core.prior.Sine(name='iota')
-priors['theta'] = bilby.core.prior.Uniform(
-    name='theta', minimum=0, maximum=np.pi, boundary='periodic', latex_label=r'$\theta_e$')
+priors['theta'] = bilby.core.prior.Cosine(name='theta', boundary='reflective', latex_label=r'$\theta_e$')
 priors['phi'] = bilby.core.prior.Uniform(name='phi', minimum=0, maximum=2 * np.pi,
                                          boundary='periodic', latex_label=r'$\phi_e$')
 priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi,
