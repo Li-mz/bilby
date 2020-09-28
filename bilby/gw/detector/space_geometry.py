@@ -70,7 +70,6 @@ class SpaceInterferometerGeometry(object):
 def earth_orbit(phase=0.):
     '''
     Returns a orbit for interferometer which moves in Earth orbit and ahead of the Earth by 'phase' degree.
-    e.g., for LISA, phase=20; for Taiji, phase=-20
     '''
     def orbit(t):
         R = 1.4959787e11  # 1AU
@@ -107,7 +106,7 @@ def earth_orbit_circular(phase=0.):
     return orbit
 
 
-def LISAlike_arm_direction(phase=0.):
+def LISAlike_arm_direction(mass_center_phase=0., arm_phase=0.):
     '''
     Returns arm_direction function of a LISA-like interferometer.
 
@@ -117,8 +116,8 @@ def LISAlike_arm_direction(phase=0.):
     '''
     def arm_direction(i, t):
         T = 31557600.0    # 1 sidereal year
-        alpha_i = 2 * np.pi * t / T - np.pi / 12 - (i - 1) * np.pi / 3 + phase * np.pi / 180
-        phi = 2 * np.pi * t / T
+        alpha_i = 2 * np.pi * t / T - np.pi / 12 - (i - 1) * np.pi / 3 + arm_phase * np.pi / 180
+        phi = 2 * np.pi * t / T + mass_center_phase * np.pi / 180
 
         ex = np.cos(phi) * np.sin(alpha_i) / 2 - np.sin(phi) * np.cos(alpha_i)
         ey = np.sin(phi) * np.sin(alpha_i) / 2 + np.cos(phi) * np.cos(alpha_i)

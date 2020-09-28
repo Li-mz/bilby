@@ -138,8 +138,8 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
         'lisa': {
             'length': 2.5e6,
             'psd': sn_lisa,
-            'orbit': earth_orbit_circular(20),
-            'arm_direction': LISAlike_arm_direction()
+            'orbit': earth_orbit_circular(phase=20),
+            'arm_direction': LISAlike_arm_direction(mass_center_phase=20)
         },
         'tianqin': {
             'length': 1.7e5,
@@ -151,7 +151,7 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
             'length': 3e6,
             'psd': sn_taiji,
             'orbit': earth_orbit_circular(-20),
-            'arm_direction': LISAlike_arm_direction(30)
+            'arm_direction': LISAlike_arm_direction(mass_center_phase=-20, arm_phase=30)
         }
     }
     if name.lower() in ifo_config.keys():
