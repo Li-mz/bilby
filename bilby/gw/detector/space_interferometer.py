@@ -145,12 +145,12 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
             'length': 1.7e5,
             'psd': sn_tianqin,
             'orbit': earth_orbit(0),
-            'arm_direction': TianQinlike_arm_direction(-4.7, 120.5, 1 / 315360)
+            'arm_direction': TianQinlike_arm_direction(theta_s=-4.7, phi_s=120.5, fsc=1 / 315360)
         },
         'taiji': {
             'length': 3e6,
             'psd': sn_taiji,
-            'orbit': earth_orbit_circular(-20),
+            'orbit': earth_orbit_circular(phase=-20),
             'arm_direction': LISAlike_arm_direction(mass_center_phase=-20, arm_phase=30)
         }
     }

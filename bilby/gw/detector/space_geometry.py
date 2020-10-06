@@ -144,6 +144,6 @@ def TianQinlike_arm_direction(theta_s, phi_s, fsc):
 
         x = np.cos(phis) * np.sin(thetas) * np.sin(alpha_i) + np.sin(phis) * np.cos(alpha_i)
         y = np.sin(phis) * np.sin(thetas) * np.sin(alpha_i) - np.cos(phis) * np.cos(alpha_i)
-        z = -np.cos(theta_s) * np.sin(alpha_i)
+        z = -np.cos(thetas) * np.sin(alpha_i)
         return np.array([x, y, z]).transpose()
     return arm_direction
