@@ -1,8 +1,6 @@
 import numpy as np
 
-from .. import utils as gwutils
-
-from typing import Callable, Union
+from typing import Callable
 
 
 class SpaceInterferometerGeometry(object):
@@ -69,12 +67,15 @@ class SpaceInterferometerGeometry(object):
 
 def earth_orbit(phase=0.):
     '''
-    Returns a orbit for interferometer which moves in Earth orbit and ahead of the Earth by 'phase' degree.
+    Returns a orbit for interferometer which moves in Earth orbit and ahead of the Earth by `phase` degree.
+    
+    Reference: 
+    arXiv:1803.03368
     '''
     def orbit(t):
         R = 1.4959787e11  # 1AU
         e = 0.0167        # eccentricity of the geocenter orbit around the Sun
-        T = 31557600.0      # 1 sidereal year
+        T = 31557600.0    # 1 sidereal year
 
         alpha = 2 * np.pi * t / T + phase * np.pi / 180
 
@@ -90,8 +91,8 @@ def earth_orbit(phase=0.):
 
 def earth_orbit_circular(phase=0.):
     '''
-    Returns a orbit for interferometer which moves in a circular orbit with R=1AU and ahead of the Earth by 'phase' degree.
-    e.g., for LISA, phase=20; for Taiji, phase=-20
+    Returns a orbit for interferometer which moves in a circular orbit with R=1AU and ahead of the Earth by `phase` degree.
+    for LISA, phase is 20; for Taiji, phase is -20.
     '''
     def orbit(t):
         R = 1.4959787e11  # 1AU
@@ -102,7 +103,6 @@ def earth_orbit_circular(phase=0.):
         return np.array([R * np.cos(alpha),
                          R * np.sin(alpha),
                          np.zeros(t.shape)]).transpose()
-
     return orbit
 
 
@@ -126,12 +126,12 @@ def LISAlike_arm_direction(mass_center_phase=0., arm_phase=0.):
     return arm_direction
 
 
-def TianQinlike_arm_direction(theta_s, phi_s, fsc):
+def Tianqinlike_arm_direction(theta_s, phi_s, fsc):
     '''
-    Returns arm_direction function of a TianQin-like interferometer.
-    Namely, the normal vector of detector plane points at a fixed reference source (theta_s,phi_s),
+    Returns arm_direction function of a Tianqin-like interferometer.
+    Namely, the normal vector of detector plane points at a fixed reference source (theta_s, phi_s),
     and spacecrafts are moving in a circular orbit around the Earth with frequency fsc. 
-    For TianQin, theta_s=-4.7, phi_s=120.5, fsc=1/315360 (1/3.65 days)
+    For TianQin, theta_s is -4.7, phi_s is 120.5, fsc is 1/315360 (1/3.65 days)
 
     Reference: 
     arXiv:1803.03368

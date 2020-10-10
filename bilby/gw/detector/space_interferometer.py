@@ -133,7 +133,7 @@ class SpaceInterferometerList(InterferometerList):
 
 def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
     from .noise_detector_3g import sn_lisa, sn_tianqin, sn_taiji
-    from .space_geometry import earth_orbit_circular, earth_orbit, LISAlike_arm_direction, TianQinlike_arm_direction
+    from .space_geometry import earth_orbit_circular, earth_orbit, LISAlike_arm_direction, Tianqinlike_arm_direction
     ifo_config = {
         'lisa': {
             'length': 2.5e6,
@@ -145,7 +145,7 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
             'length': 1.7e5,
             'psd': sn_tianqin,
             'orbit': earth_orbit(0),
-            'arm_direction': TianQinlike_arm_direction(theta_s=-4.7, phi_s=120.5, fsc=1 / 315360)
+            'arm_direction': Tianqinlike_arm_direction(theta_s=-4.7, phi_s=120.5, fsc=1 / 315360)
         },
         'taiji': {
             'length': 3e6,
