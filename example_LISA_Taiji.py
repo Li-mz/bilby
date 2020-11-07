@@ -1,7 +1,10 @@
 # %%
-import bilby
 import numpy as np
 
+import bilby
+from bilby.gw import WaveformGenerator
+from bilby.gw.detector import get_space_interferometer
+from bilby.core.prior import Uniform,Sine,Cosine
 from pycbc.waveform import get_fd_waveform
 
 # %%
@@ -82,7 +85,7 @@ duration = 2**18
 sampling_frequency = 1 / 16
 
 np.random.seed(0)
-outdir = 'LISA_Taiji_TianQin_PV'
+outdir = 'LISA_Taiji_PV'
 label = 'PV'
 bilby.core.utils.setup_logger(outdir=outdir, label=label)
 
@@ -90,7 +93,7 @@ waveform_arguments = dict(minimum_frequency=1e-4)
 
 # %%
 def PV_generator_from_mode(mode):
-    return bilby.gw.waveform_generator.WaveformGenerator(
+    return WaveformGenerator(
         duration=duration, sampling_frequency=sampling_frequency,
         frequency_domain_source_model=PV_waveform_from_mode([mode]),
         parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters,
@@ -98,7 +101,7 @@ def PV_generator_from_mode(mode):
 
 
 def PVam_generator_from_mode(mode):
-    return bilby.gw.waveform_generator.WaveformGenerator(
+    return WaveformGenerator(
         duration=duration, sampling_frequency=sampling_frequency,
         frequency_domain_source_model=PVam_waveform_from_mode([mode]),
         parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters,
@@ -108,13 +111,13 @@ def PVam_generator_from_mode(mode):
 # %%
 mode_array = [[2, 2], [2, 1], [3, 3], [4, 4], [5, 5]]
 frequencies = np.linspace(1e-4, 1e-2, len(PV_generator_from_mode([2, 2]).frequency_array))
-lisa = bilby.gw.detector.get_space_interferometer('LISA', frequencies, PV_generator_from_mode, mode_array)
-taiji = bilby.gw.detector.get_space_interferometer('Taiji', frequencies, PV_generator_from_mode, mode_array)
-tianqin = bilby.gw.detector.get_space_interferometer('Tianqin', frequencies, PV_generator_from_mode, mode_array)
+lisa = get_space_interferometer('LISA', frequencies, PV_generator_from_mode, mode_array)
+taiji = get_space_interferometer('Taiji', frequencies, PV_generator_from_mode, mode_array)
+# tianqin = get_space_interferometer('Tianqin', frequencies, PV_generator_from_mode, mode_array)
 
 ifos = lisa
 ifos.extend(taiji)
-ifos.extend(tianqin)
+# ifos.extend(tianqin)
 
 ifos.set_strain_data_from_power_spectral_densities(
     sampling_frequency=sampling_frequency, duration=duration,
@@ -127,28 +130,28 @@ priors = {}
 for key, value in injection_parameters.items():
     priors[key] = value
 
-priors['mass_1'] = bilby.core.prior.Uniform(minimum=1e5, maximum=1e7, name='mass_1')
-priors['mass_2'] = bilby.core.prior.Uniform(minimum=1e5, maximum=1e7, name='mass_2')
+priors['mass_1'] = Uniform(minimum=1e5, maximum=1e7, name='mass_1', unit=r'$M_\odot$')
+priors['mass_2'] = Uniform(minimum=1e5, maximum=1e7, name='mass_2', unit=r'$M_\odot$')
 
-priors['phase'] = bilby.core.prior.Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
-priors['iota'] = bilby.core.prior.Sine(name='iota')
-priors['theta'] = bilby.core.prior.Cosine(name='theta', boundary='reflective', latex_label=r'$\theta_e$')
-priors['phi'] = bilby.core.prior.Uniform(name='phi', minimum=0, maximum=2 * np.pi,
+priors['phase'] = Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
+priors['iota'] = Sine(name='iota')
+priors['theta'] = Cosine(name='theta', boundary='reflective', latex_label=r'$\theta_e$')
+priors['phi'] = Uniform(name='phi', minimum=0, maximum=2 * np.pi,
                                          boundary='periodic', latex_label=r'$\phi_e$')
-priors['psi'] = bilby.core.prior.Uniform(name='psi', minimum=0, maximum=np.pi,
+priors['psi'] = Uniform(name='psi', minimum=0, maximum=np.pi,
                                          boundary='periodic', latex_label=r'$\psi$')
 
-priors['luminosity_distance'] = bilby.core.prior.Uniform(minimum=1e3, maximum=1e5, name='luminosity_distance')
+priors['luminosity_distance'] = Uniform(minimum=1e3, maximum=1e5, name='luminosity_distance', unit=r'$\mathrm{Mpc}$')
 
-priors['geocent_time'] = bilby.core.prior.Uniform(
+priors['geocent_time'] = Uniform(
     minimum=injection_parameters['geocent_time'] - 10,
     maximum=injection_parameters['geocent_time'] + 10,
-    name='geocent_time', latex_label='$t_c$', unit='$s$')
+    name='geocent_time', unit=r'$\mathrm{s}$')
 '''
 for key in ['spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y','spin2z']:
-    priors[key] = bilby.core.prior.Uniform(minimum = -0.5, maximum = 0.5, name=key)    
+    priors[key] = Uniform(minimum = -0.5, maximum = 0.5, name=key)    
 '''
-priors['A'] = bilby.core.prior.Uniform(minimum=-1e3, maximum=1e3, name='A')
+priors['A'] = Uniform(minimum=-1e3, maximum=1e3, name='A', unit=r'$\mathrm{Hz}^{-2}$')
 
 # %%
 # waveform_generator here is not applied in calculating likelihood, because we only use parameters injected to calculate response.
