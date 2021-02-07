@@ -131,7 +131,7 @@ class SpaceInterferometerList(InterferometerList):
                                             length, orbit, arm_direction, channel, generator, mode_array))
 
 
-def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
+def get_space_interferometer(name, psd_frequency_array, generator, mode_array, minimum_frequency, maximum_frequency):
     from .noise_detector_3g import sn_lisa, sn_tianqin, sn_taiji
     from .space_geometry import earth_orbit_circular, earth_orbit, LISAlike_arm_direction, Tianqinlike_arm_direction
     ifo_config = {
@@ -159,8 +159,8 @@ def get_space_interferometer(name, psd_frequency_array, generator, mode_array):
         return SpaceInterferometerList(
             power_spectral_density=PowerSpectralDensity(
                 frequency_array=psd_frequency_array, psd_array=config['psd'](psd_frequency_array)),
-            minimum_frequency=min(psd_frequency_array), maximum_frequency=max(psd_frequency_array),
+            minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency,
             name=name, length=config['length'], orbit=config['orbit'], arm_direction=config['arm_direction'],
             generator=generator, mode_array=mode_array)
     else:
-        raise ValueError("can only provide these interferometers: " + ','.join(ifo_config.keys()))
+        raise ValueError("Unknown interferometer. Interferometer name should be in : " + ','.join(ifo_config.keys()))
