@@ -8,7 +8,7 @@ Bilby
 | This branch adds the class SpaceInterferometer, which allows you to work with space-borne GW detectors. SpaceInterferometer is inherited from the original Interferometer class, which means you can treat a SpaceInterferometer object (space-borne detector) in the same way as a Interferometer object (ground based detector).
 | We provide a `example file <https://github.com/Li-mz/bilby/blob/SpaceInterferometer/example_LISA_Taiji.py>`_ to show how to work with SpaceInterferometer, in which we inject GR signal and use parity-violating GW waveform in likelihood to test the abilitiy of constraing PV gravity of LISA and Taiji joint observation.
 | Note that this version considers different t(f) (SPA approximation) for different GW harmonic mode, but takes long time to run. You can see the version which doesn't consider different t(f) for different modes in `this branch <https://github.com/Li-mz/bilby/tree/SpaceResponse/>`_.
-| Contributors: `Mingzheng Li <https://github.com/Li-mz/>`_, `Qian Hu <https://github.com/MarinerQ/>`_
+| Contributors: `Mingzheng Li <https://github.com/MichiyamaKaren/>`_, `Qian Hu <https://github.com/MarinerQ/>`_
 
 -----
 
